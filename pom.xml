@@ -21,4 +21,12 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>ru.kit</groupId>
+            <artifactId>tonometr-autocloseable-lib</artifactId>
+            <version>20161209-03</version>
+        </dependency>
+
+    </dependencies>
 </project>

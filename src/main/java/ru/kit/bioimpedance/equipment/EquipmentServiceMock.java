@@ -9,7 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class EquipmentServiceMock implements EquipmentService {
 
-
     private boolean handsReady = false;
     private boolean legsReady = false;
     private boolean equipmentReady = false;
@@ -17,6 +16,7 @@ public class EquipmentServiceMock implements EquipmentService {
     private int biompedanceCheck = 0;
     private List<PulseOximeterValue> waves = new ArrayList<>();
     private BioimpedanceValue bioimpedanceValue = null;
+    private boolean isTesting  = false;
 
     @Override
     public PulseOximeterValue getLastPulseoximeterValue() {
@@ -27,6 +27,27 @@ public class EquipmentServiceMock implements EquipmentService {
     @Override
     public void setLastPulseoximeterValue(Integer heartRate, Integer spo2, Integer wave) {
         this.waves.add(new PulseOximeterValue(heartRate, spo2, wave));
+    }
+
+    @Override
+    public void clearWavesValue() {
+        this.waves = new ArrayList<>();
+    }
+
+    @Override
+    public void setMockWavesValues() {
+        try(BufferedReader br = new BufferedReader(new FileReader("oxi_wave.txt"))) {
+            waves = new ArrayList<>();
+            String line = br.readLine();
+            while (line != null) {
+                waves.add(new PulseOximeterValue(ThreadLocalRandom.current().nextInt(80, 100 + 1),
+                        ThreadLocalRandom.current().nextInt(95, 100),
+                        Integer.parseInt(line)));
+                line = br.readLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

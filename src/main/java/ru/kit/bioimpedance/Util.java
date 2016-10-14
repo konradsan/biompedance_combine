@@ -2,13 +2,15 @@ package ru.kit.bioimpedance;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ru.kit.bioimpedance.commands.Command;
+import ru.kit.bioimpedance.commands.StartTest;
 import ru.kit.bioimpedance.dto.Data;
+import ru.kit.bioimpedance.dto.Inspection;
+import ru.kit.bioimpedance.dto.Inspections;
+import ru.kit.bioimpedance.dto.LastResearch;
 import ru.kit.bioimpedance.equipment.BioimpedanceValue;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
 
 public class Util {
     public static Data deserializeData(String json) throws IOException {
@@ -49,6 +51,53 @@ public class Util {
             ex.printStackTrace();
         }
         return new BioimpedanceValue(fm, tbw, mm);
+    }
+
+    class ParseHypoxiaWaves extends Thread {
+
+        private int count = 0;
+        public void run() {
+            try (Socket socket = new Socket("localhost", 8085);
+                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("oxi_wave.txt"), "cp1251"))
+            ) {
+
+                Command startTest = new StartTest();
+                output.write(serialize(startTest));
+                output.newLine();
+                output.flush();
+
+                while (true) {
+
+                    String line = br.readLine();
+                    if (line == null) {
+                        System.err.println("LastResearch not found");
+                    }
+
+                    Data data = deserializeData(line);
+                    LastResearch lastResearch;
+
+                    if (data instanceof LastResearch) {
+
+                        for (Inspection inspection : ((LastResearch) data).getInspections().values()) {
+                            System.err.println(inspection);
+                        }
+                    } else if (data instanceof Inspections) {
+
+                        if (count > 18000) {return;}
+
+                        int wave = ((Inspections)data).getWave();
+                        System.out.println(count + " wave: " + wave);
+                        writer.write("" + wave);
+                        writer.write("\r\n");
+                        count++;
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }
 

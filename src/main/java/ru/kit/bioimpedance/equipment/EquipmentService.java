@@ -24,5 +24,9 @@ public interface EquipmentService {
 
     public void setLastPulseoximeterValue(Integer heartRate, Integer spo2, Integer wave);
 
+    public void clearWavesValue();
+
+    public void setMockWavesValues();
+
 
 }

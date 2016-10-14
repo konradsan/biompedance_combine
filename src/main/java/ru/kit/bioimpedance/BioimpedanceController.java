@@ -3,26 +3,36 @@ package ru.kit.bioimpedance;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import ru.kit.bioimpedance.commands.CheckStatus;
+import ru.kit.bioimpedance.commands.Command;
+import ru.kit.bioimpedance.commands.Launch;
+import ru.kit.bioimpedance.commands.StartTest;
+import ru.kit.bioimpedance.control.LineChartWithMarker;
+import ru.kit.bioimpedance.dto.*;
 import ru.kit.bioimpedance.equipment.*;
 import ru.kit.tonometr_comport.Result;
 import ru.kit.tonometr_comport.TonometrReader;
 
+import java.io.*;
+import java.net.Socket;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +40,84 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
 import static ru.kit.bioimpedance.CustomPointType.*;
+import static ru.kit.bioimpedance.Util.deserializeData;
+import static ru.kit.bioimpedance.Util.serialize;
 
 public class BioimpedanceController {
 
+
+    private int age;
+    private boolean isMan;
+    private int weight;
+    private int height;
+    private int activityLevel;
+    private int systBP;
+    private int diastBP;
+    private int seconds;
+
+    public int getActivityLevel() {
+        return activityLevel;
+    }
+
+    public void setActivityLevel(int activityLevel) {
+        this.activityLevel = activityLevel;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public boolean isMan() {
+        return isMan;
+    }
+
+    public void setIsMan(boolean isMan) {
+        this.isMan = isMan;
+    }
+
+    public int getWeight() {
+        return weight;
+    }
+
+    public void setWeight(int weight) {
+        this.weight = weight;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getSystBP() {
+        return systBP;
+    }
+
+    public void setSystBP(int systBP) {
+        this.systBP = systBP;
+    }
+
+    public int getDiastBP() {
+        return diastBP;
+    }
+
+    public void setDiastBP(int diastBP) {
+        this.diastBP = diastBP;
+    }
+
+    public int getSeconds() {
+        return seconds;
+    }
+
+    public void setSeconds(int seconds) {
+        this.seconds = seconds;
+    }
 
     private int count = 0;
     private int testTime = 140;
@@ -46,6 +131,16 @@ public class BioimpedanceController {
     private final int MAX_TIME = 140;
     private int TIME_BETWEEN_FRAMES = 20;
     private boolean pulseIsRun = false;
+
+    final static int portBioimpedance = 8086;
+    final static int portHypoxia = 8085;
+    private static final int MAX_DATA_POINTS = 3000;//;7302 / 123 * secondsForTest / NUMBER_OF_SKIP;
+    private static final int MAX_DATA_VALUES = 150;
+    private XYChart.Series<Number, Number> seriesHR;
+    private XYChart.Series<Number, Number> seriesSPO2;
+    private boolean isTesting = false;
+    Thread checkReadyThreadH, checkReadyThread;
+    private static final int NUMBER_OF_SKIP = 5;
 
     @FXML
     private Canvas heartRhythm;
@@ -63,6 +158,11 @@ public class BioimpedanceController {
     private Label heartRateLabel;
     @FXML
     private Label spo2Label;
+    @FXML
+    GridPane forChart;
+
+    private LineChartWithMarker<Number, Number> chart;
+
     @FXML
     private Label systolicPressureLabel;
     @FXML
@@ -83,10 +183,207 @@ public class BioimpedanceController {
         initHeartRhythm();
         initPulseWave();
         initTimeline();
+        initHypoxiaChart();
 
         pieChart.setLegendVisible(false);
         systolicPressureLabel.textProperty().bindBidirectional(systolicPressureProperty, new PressureConverter());
         diastolicPressureLabel.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
+
+        startChecking();
+//        drawHRnSPO2();
+    }
+
+    private void startChecking(){
+        checkReadyThreadH = new CheckReadyThread(this, portHypoxia);
+        checkReadyThreadH.setDaemon(true);
+        checkReadyThreadH.start();
+
+        /*checkReadyThread = new CheckReadyThread(this, portBioimpedance);
+        checkReadyThread.setDaemon(true);
+        checkReadyThread.start();*/
+    }
+
+    private int countPackages = 0; //считаем пакеты по гепоксии
+    class CheckReadyThread extends Thread {
+
+        BioimpedanceController controller;
+        final private int port;
+//        private volatile boolean BioImpedanceIsReady = false;
+        private boolean HypoxiaIsReady = false;
+
+        public CheckReadyThread(BioimpedanceController controller, int portNumber) {
+            this.controller = controller;
+            this.port = portNumber;
+        }
+
+        public void run () {
+            try (Socket socket = new Socket("localhost", this.port);
+                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+/*                Command command = new Launch(controller.getAge(), controller.isMan(),
+                        controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
+                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
+                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 7);
+                sendCommand(command, output);
+
+                int counterPoints = 0, counterInspections = 0; //for Hypoxia
+
+                do {
+                    sendCommand(new CheckStatus(), output);
+
+                    String line = br.readLine();
+                    if (line == null) break;
+                    Data data = deserializeData(line);
+                    System.err.println(countPackages++);
+
+                    if (data instanceof ReadyStatusBio) {
+
+                        ReadyStatusBio readyStatus = (ReadyStatusBio) data;
+                        System.err.println(readyStatus);
+                        if (readyStatus.isError()) {
+//                            BioImpedanceIsReady = false;
+                            System.err.println("Device not found or BC lib not initialized");
+                            equipmentService.setEquipmentReady(false);
+                            /*Platform.runLater(() -> {
+                                handsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                handsReadyLabel.setText("---");
+                                legsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                legsReadyLabel.setText("---");
+//                            return EquipmentStatus.EQUIPMENT_FAlSE;
+                            });*/
+                        }else if (!readyStatus.isHands() && !readyStatus.isLegs()){
+//                            BioImpedanceIsReady = false;
+                            System.err.println("Device is found, BC lib initialized, hands not connected, feet not connected");
+                            equipmentService.setEquipmentReady(true);
+                            equipmentService.setLegsReady(false);
+                            equipmentService.setHandsReady(false);
+                            /*Platform.runLater(() -> {
+                                handsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                handsReadyLabel.setText("OFF");
+                                legsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                legsReadyLabel.setText("OFF");
+//                            return EquipmentStatus.HANDS_OFF_LEGS_OFF;
+                            });*/
+                        } else if (readyStatus.isHands() && !readyStatus.isLegs()){
+//                            BioImpedanceIsReady = false;
+                            System.err.println("Device is found, BC lib initialized, hands connected, feet not connected");
+                            equipmentService.setEquipmentReady(true);
+                            equipmentService.setLegsReady(false);
+                            equipmentService.setHandsReady(true);
+                            /*Platform.runLater(() -> {
+                                handsReadyLabel.setTextFill(Paint.valueOf("#00FF00"));
+                                handsReadyLabel.setText("ON");
+                                legsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                legsReadyLabel.setText("OFF");
+//                            return EquipmentStatus.HANDS_ON_LEGS_OFF;
+                            });*/
+                        } else if (!readyStatus.isHands() && readyStatus.isLegs()){
+//                            BioImpedanceIsReady = false;
+                            System.err.println("Device is found, BC lib initialized, hands not connected, feet connected");
+                            equipmentService.setEquipmentReady(true);
+                            equipmentService.setLegsReady(true);
+                            equipmentService.setHandsReady(false);
+                            /*Platform.runLater(() -> {
+                                handsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                                handsReadyLabel.setText("OFF");
+                                legsReadyLabel.setTextFill(Paint.valueOf("#00FF00"));
+                                legsReadyLabel.setText("ON");
+//                            return EquipmentStatus.HANDS_OFF_LEGS_ON;
+                            });*/
+                        } else if (readyStatus.isHands() && readyStatus.isLegs()){
+//                            collectData(socket);
+//                            BioImpedanceIsReady = true;
+                            System.err.println("Device is found, BC lib initialized, hands connected, feet connected");
+                            equipmentService.setEquipmentReady(true);
+                            equipmentService.setLegsReady(true);
+                            equipmentService.setHandsReady(true);
+                            /*Platform.runLater(() -> {
+                                handsReadyLabel.setTextFill(Paint.valueOf("#00FF00"));
+                                handsReadyLabel.setText("ON");
+                                legsReadyLabel.setTextFill(Paint.valueOf("#00FF00"));
+                                legsReadyLabel.setText("ON");
+//                            return EquipmentStatus.EQUIPMENT_READY;
+                            });*/
+                        }
+                    } else if (data instanceof ReadyStatus) {
+
+                        ReadyStatus readyStatus = (ReadyStatus) data;
+                        HypoxiaIsReady = readyStatus.isPulse();
+                        System.err.println(readyStatus);
+
+                        if (HypoxiaIsReady) {
+                            Inspections inspections = (Inspections) deserializeData(br.readLine());
+                            equipmentService.setLastPulseoximeterValue(inspections.getPulse(), inspections.getSpo2(), inspections.getWave());
+                            System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
+                            drawOneInspectionsHRnSPO2(inspections, /*++counterInspections,*/  counterPoints++);
+                            /*if (BioImpedanceIsReady){
+                                controller.enableAll();
+                            }*/
+                        } else {
+                            controller.disableAll();
+                            Platform.runLater(() -> {
+                                controller.heartRateLabel.setText("0");
+                                controller.spo2Label.setText("0");
+                            });
+                        }
+
+                        /*try {
+                            Thread.sleep(*//*500*//*10);
+                        } catch (InterruptedException e) {
+                            System.err.println("Interrupt checking ready");
+                        }*/
+                    }
+                    /*try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        System.err.println("Interrupt checking ready");
+                    }*/
+
+                } while (!controller.isTesting && !isInterrupted());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void sendCommand (Command command, BufferedWriter output) {
+        try {
+            output.write(serialize(command));
+            output.newLine();
+            output.flush();
+        } catch (IOException ex) {
+            System.err.println("sendCommand() fail! command - " + command);
+            ex.printStackTrace();
+        }
+    }
+
+    public void collectData(Socket socket) throws IOException {
+
+        try (BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+             BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream())) ) {
+
+            Command startTest = new StartTest();
+
+            output.write(serialize(startTest));
+            output.newLine();
+            output.flush();
+
+            String line = br.readLine();
+            if (line == null) {
+                System.err.println("LastResearch not found");
+                return;
+            }
+
+            Data data = deserializeData(line);
+            LastResearch lastResearch;
+            if (data instanceof LastResearch) {
+
+                for (Inspection inspection : ((LastResearch) data).getInspections().values()) {
+                    System.err.println(inspection);
+                }
+            }
+        }
     }
 
     private void addPulse() {
@@ -115,7 +412,6 @@ public class BioimpedanceController {
             pulseWave.setHeight(newValue.doubleValue() / 2 - 58);
             pulseWave.getGraphicsContext2D().fillRect(0, 0, pulseWave.getWidth(), pulseWave.getHeight());
         });
-
     }
 
     private void initHeartRhythm() {
@@ -131,7 +427,177 @@ public class BioimpedanceController {
         });
     }
 
+    private void initHypoxiaChart(){
+        chart = new LineChartWithMarker<>(new NumberAxis(), new NumberAxis());
+
+        chart.getStylesheets().add("ru/kit/bioimpedance/css/linechart.css");
+
+        forChart.getChildren().add(chart);
+
+        NumberAxis xAxis = (NumberAxis) chart.getXAxis();
+
+        xAxis.setForceZeroInRange(false);
+        xAxis.setAutoRanging(false);
+        xAxis.setLowerBound(0);
+        xAxis.setUpperBound(MAX_DATA_POINTS);
+        xAxis.setTickLabelsVisible(false);
+        xAxis.setTickMarkVisible(false);
+        xAxis.setMinorTickVisible(false);
+
+        NumberAxis yAxis = (NumberAxis) chart.getYAxis();
+        yAxis.setLowerBound(0);
+        yAxis.setUpperBound(MAX_DATA_VALUES);
+        yAxis.setAutoRanging(false);
+        yAxis.setTickUnit(10);
+        yAxis.setTickLabelFill(Color.WHITE);
+
+        chart.setVerticalGridLinesVisible(false);
+        chart.setCreateSymbols(false);
+        chart.setAnimated(false);
+        chart.setHorizontalGridLinesVisible(true);
+        chart.setLegendVisible(false);
+
+        prepareChart();
+        disableAll();
+    }
+
+    void enableAll() {
+        startButton.setDisable(false);
+    }
+
+    void disableAll() {
+        startButton.setDisable(true);
+    }
+
+    private void prepareChart() {
+        chart.getData().clear();
+
+        seriesHR = new XYChart.Series<>();
+        seriesSPO2 = new XYChart.Series<>();
+
+        // Set Name for Series
+        seriesHR.setName("Heart rate");
+        seriesSPO2.setName("SPO2");
+
+        //set size of UpperBound of Chart
+        double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
+        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound / 10);
+
+        // Add Chart Series
+        chart.getData().addAll(seriesHR, seriesSPO2);
+    }
+
+    private void beforeTest() {
+        isTesting = true;
+        checkReadyThread.interrupt();
+
+        disableAll();
+        prepareChart();
+    }
+
+    void afterTest() {
+        isTesting = false;
+        seconds = 0;
+        System.err.println("After test");
+    }
+
+    //отображение значений SPO2 и HR
+    /*private void showHRnSPO2Num(Inspections inspections) {
+
+        Platform.runLater(() -> {
+            this.heartRateLabel.setText("" + inspections.getPulse());
+            this.spo2Label.setText("" + inspections.getSpo2());
+        });
+
+    }*/
+
+    private void drawOneInspectionsHRnSPO2 (Inspections inspections, /*int counterInspections,*/ int counterPoints){
+
+//        if (counterInspections % NUMBER_OF_SKIP == 0) {
+            seriesHR.getData().add(new XYChart.Data(counterPoints, inspections.getPulse()));
+            seriesSPO2.getData().add(new XYChart.Data(counterPoints, inspections.getSpo2()));
+
+            double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
+            if (counterPoints > 0.8 * upperBound) {
+                ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 1.33);
+            }
+//        }
+
+        Platform.runLater(() -> {
+            this.heartRateLabel.setText("" + inspections.getPulse());
+            this.spo2Label.setText("" + inspections.getSpo2());
+        });
+    }
+
+    private void drawHRnSPO2 (){
+//        beforeTest();
+
+        Thread updateSeries = new Thread(() -> {
+            try (Socket socket = new Socket("localhost", portHypoxia)){
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
+                sendCommand(new StartTest(), output);
+
+                System.err.println("Test started");
+
+                String line = br.readLine();
+                Data data = null;
+                if (line != null) {
+                    data = deserializeData(line);
+                }
+
+                int counterPoints = 0, counterInspections = 0;
+
+                while (data instanceof Inspections) {
+                    //System.err.println(line);
+                    if (line != null) {
+                        Inspections inspections = (Inspections) data;
+
+//                        showHRnSPO2Num(inspections);
+
+                        if (++counterInspections % NUMBER_OF_SKIP == 0) {
+                            seriesHR.getData().add(new XYChart.Data(counterPoints, inspections.getPulse()));
+                            seriesSPO2.getData().add(new XYChart.Data(counterPoints++, inspections.getSpo2()));
+
+                            double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
+                            if (counterPoints > 0.8 * upperBound) {
+                                ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 1.33);
+                            }
+                        }
+
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    line = br.readLine();
+                    if (line != null) {
+                        data = deserializeData(line);
+                    }
+
+                }
+
+                if (data instanceof LastResearch) {
+                    LastResearch lastResearch = (LastResearch) data;
+                    System.err.println(lastResearch);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+//            afterTest();
+//            startChecking();
+        });
+        updateSeries.setDaemon(true);
+        updateSeries.start();
+    }
+
     private void initTimeline() {
+
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
             drawHeartRhythm();
             drawPulseWave();
@@ -144,10 +610,43 @@ public class BioimpedanceController {
                 gc.fillRect(heartRhythm.getWidth() - 2, 0, 2, heartRhythm.getHeight());
                 pulseIsRun = false;
             }
+
             if (!testStarted) {
+
+                if (!equipmentService.isEquipmentReady()) {
+                    handsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                    handsReadyLabel.setText("---");
+                    legsReadyLabel.setTextFill(Paint.valueOf("#FF0000"));
+                    legsReadyLabel.setText("---");
+                }
+                else {
+                    checkReady(equipmentService.isHandsReady(), handsReadyLabel);
+                    checkReady(equipmentService.isLegsReady(), legsReadyLabel);
+                }
+            }
+
+            PulseOximeterValue pulseoximeterValue = equipmentService.getLastPulseoximeterValue();
+
+            if (pulseoximeterValue == null) {
+                heartRateLabel.setText("--");
+                spo2Label.setText("--");
+            } else {
+                heartRateLabel.setText(pulseoximeterValue.getHeartRate() != null ?
+                                        pulseoximeterValue.getHeartRate().toString() : "--");
+
+                spo2Label.setText(pulseoximeterValue.getSpo2() != null ?
+                                    pulseoximeterValue.getSpo2().toString() : "--");
+
+                startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
+                        && equipmentService.isHandsReady() && equipmentService.isLegsReady()
+                        && diastolicPressureProperty.get() > 0 && systolicPressureProperty.get() > 0));
+            }
+
+            /*if (!testStarted) {
                 checkReady(equipmentService.isHandsReady(), handsReadyLabel);
                 checkReady(equipmentService.isLegsReady(), legsReadyLabel);
             }
+
             PulseOximeterValue pulseoximeterValue = equipmentService.getLastPulseoximeterValue();
             if (pulseoximeterValue == null) {
                 heartRateLabel.setText("--");
@@ -161,12 +660,14 @@ public class BioimpedanceController {
                 startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get() > 0 && systolicPressureProperty.get() > 0));
-            }
+            }*/
 
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
+
     }
+
 
     private void checkReady(boolean ready, Label label) {
         if (ready) {
@@ -258,10 +759,10 @@ public class BioimpedanceController {
     @FXML
     private void startTest(ActionEvent actionEvent) {
 
-
         testTime = MAX_TIME;
         progressBar.setProgress(0);
         timeLabel.setText(String.format("%d:%02d", testTime / 60, testTime % 60));
+
         Timeline timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             testTime--;
             timeLabel.setText(String.format("%d:%02d", testTime / 60, testTime % 60));
@@ -276,6 +777,8 @@ public class BioimpedanceController {
                 while (!equipmentService.isBioimpedanceReady()) {
                     Thread.sleep(1000);
                 }
+
+//                Util.parseFile()
                 return equipmentService.getBioimpedanceValue();
             }
         };

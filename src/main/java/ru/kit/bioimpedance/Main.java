@@ -8,6 +8,7 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
+
         Parent root = new Pane();
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root));

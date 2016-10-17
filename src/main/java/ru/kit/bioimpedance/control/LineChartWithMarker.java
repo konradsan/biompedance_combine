@@ -25,8 +25,8 @@ public class LineChartWithMarker<X, Y> extends LineChart<X, Y> {
     public LineChartWithMarker(Axis<X> xAxis, Axis<Y> yAxis) {
         super(xAxis, yAxis);
 
-        verticalMarkers = FXCollections.observableArrayList(data -> new Observable[]{data.XValueProperty()});
-        verticalMarkers.addListener((InvalidationListener) observable -> layoutPlotChildren());
+//        verticalMarkers = FXCollections.observableArrayList(data -> new Observable[]{data.XValueProperty()});
+//        verticalMarkers.addListener((InvalidationListener) observable -> layoutPlotChildren());
     }
 
 
@@ -51,17 +51,17 @@ public class LineChartWithMarker<X, Y> extends LineChart<X, Y> {
         verticalMarkers.remove(marker);
     }
 
-    @Override
-    protected void layoutPlotChildren() {
-        super.layoutPlotChildren();
-
-        for (Data<X, Y> verticalMarker : verticalMarkers) {
-            Line line = (Line) verticalMarker.getNode();
-            line.setStartX(getXAxis().getDisplayPosition(verticalMarker.getXValue()) + 0.5);  // 0.5 for crispness
-            line.setEndX(line.getStartX());
-            line.setStartY(0d);
-            line.setEndY(getBoundsInLocal().getHeight());
-            line.toFront();
-        }
-    }
+//    @Override
+//    protected void layoutPlotChildren() {
+//        super.layoutPlotChildren();
+//
+//        for (Data<X, Y> verticalMarker : verticalMarkers) {
+//            Line line = (Line) verticalMarker.getNode();
+//            line.setStartX(getXAxis().getDisplayPosition(verticalMarker.getXValue()) + 0.5);  // 0.5 for crispness
+//            line.setEndX(line.getStartX());
+//            line.setStartY(0d);
+//            line.setEndY(getBoundsInLocal().getHeight());
+//            line.toFront();
+//        }
+//    }
 }

@@ -187,9 +187,9 @@ public class BioimpedanceController {
         diastolicPressureLabel.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
 
         startChecking();
-//        drawHRnSPO2();
     }
 
+    //начать режим проверки оборудования - графики и поля приложени заполняются значениями
     private void startChecking(){
 
         checkReadyThread = new CheckReadyThread(this, portHypoxia, portBioimpedance);
@@ -197,6 +197,9 @@ public class BioimpedanceController {
         checkReadyThread.start();
     }
 
+    //тред проверки оборудования
+    //заполняется график гипоксии, в полях ЧСС и SPO2 отражаются текущие значения
+    //передача значений состояния пластин и оборудования в equipmentService
     class CheckReadyThread extends Thread {
 
         final private int hypoxiaPort;
@@ -209,6 +212,7 @@ public class BioimpedanceController {
             this.bioPort = bioPortNumber;
         }
 
+        @Override
         public void run () {
             try (Socket hypoxiaSocket = new Socket("localhost", this.hypoxiaPort);
                  BufferedWriter outputH = new BufferedWriter(new OutputStreamWriter(hypoxiaSocket.getOutputStream()));
@@ -220,7 +224,7 @@ public class BioimpedanceController {
 /*                Command command = new Launch(controller.getAge(), controller.isMan(),
                         controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
                         controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
-                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 7);
+                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 140);
                 sendCommand(command, outputB);
                 sendCommand(command, outputH);
 
@@ -272,10 +276,8 @@ public class BioimpedanceController {
 
                     if (readyStatusH.isPulse()) {
                         Inspections inspections = (Inspections) deserializeData(brH.readLine());
-//                            equipmentService.setLastPulseoximeterValue(inspections.getPulse(), inspections.getSpo2(), inspections.getWave());
                         System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
-                        drawOneInspectionsHRnSPO2(inspections, /*++counterInspections,*/  counterPoints++);
-                        showHRnSPO2Num(inspections);
+                        drawOneInspectionsHRnSPO2(inspections, counterPoints++);
 
                     } else {
                         controller.disableAll();
@@ -292,138 +294,6 @@ public class BioimpedanceController {
                     }
 
                 } while (!isTesting && !isInterrupted());
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    class CheckReadyBioThread extends Thread {
-
-        final private int port;
-        BioimpedanceController controller;
-
-        public CheckReadyBioThread(BioimpedanceController controller, int portNumber) {
-            this.controller = controller;
-            this.port = portNumber;
-        }
-
-        public void run () {
-            try (Socket socket = new Socket("localhost", this.port);
-                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-/*                Command command = new Launch(controller.getAge(), controller.isMan(),
-                        controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
-                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
-                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 7);
-                sendCommand(command, output);
-
-                do {
-                    sendCommand(new CheckStatus(), output);
-
-                    String line = br.readLine();
-                    if (line == null) break;
-                    Data data = deserializeData(line);
-
-                    ReadyStatusBio readyStatus = (ReadyStatusBio) data;
-                    System.err.println(readyStatus);
-
-                    if (readyStatus.isError()) {
-                        System.err.println("Device not found or BC lib not initialized");
-                        equipmentService.setEquipmentReady(false);
-
-                    }else if (!readyStatus.isHands() && !readyStatus.isLegs()){
-                        System.err.println("Device is found, BC lib initialized, hands not connected, feet not connected");
-                        equipmentService.setEquipmentReady(true);
-                        equipmentService.setLegsReady(false);
-                        equipmentService.setHandsReady(false);
-
-                    } else if (readyStatus.isHands() && !readyStatus.isLegs()){
-                        System.err.println("Device is found, BC lib initialized, hands connected, feet not connected");
-                        equipmentService.setEquipmentReady(true);
-                        equipmentService.setLegsReady(false);
-                        equipmentService.setHandsReady(true);
-
-                    } else if (!readyStatus.isHands() && readyStatus.isLegs()){
-                        System.err.println("Device is found, BC lib initialized, hands not connected, feet connected");
-                        equipmentService.setEquipmentReady(true);
-                        equipmentService.setLegsReady(true);
-                        equipmentService.setHandsReady(false);
-
-                    } else if (readyStatus.isHands() && readyStatus.isLegs()){
-                        System.err.println("Device is found, BC lib initialized, hands connected, feet connected");
-                        equipmentService.setEquipmentReady(true);
-                        equipmentService.setLegsReady(true);
-                        equipmentService.setHandsReady(true);
-
-                    }
-                    try {
-                        Thread.sleep(20);
-                    } catch (InterruptedException e) {
-                        System.err.println("Interrupt checking ready");
-                    }
-
-                } while (!controller.isTesting && !isInterrupted());
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    class CheckReadyHypoxiaThread extends Thread {
-
-        BioimpedanceController controller;
-        final private int port;
-
-        public CheckReadyHypoxiaThread(BioimpedanceController controller, int portNumber) {
-            this.controller = controller;
-            this.port = portNumber;
-        }
-
-        public void run () {
-            try (Socket socket = new Socket("localhost", this.port);
-                 BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-
-/*                Command command = new Launch(controller.getAge(), controller.isMan(),
-                        controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
-                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
-                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 7);
-                sendCommand(command, output);
-
-                int counterPoints = 0;
-                do {
-                    sendCommand(new CheckStatus(), output);
-
-                    String line = br.readLine();
-                    if (line == null) break;
-                    Data data = deserializeData(line);
-
-                    ReadyStatus readyStatus = (ReadyStatus) data;
-                    System.err.println(readyStatus);
-
-                    if (readyStatus.isPulse()) {
-                        Inspections inspections = (Inspections) deserializeData(br.readLine());
-//                            equipmentService.setLastPulseoximeterValue(inspections.getPulse(), inspections.getSpo2(), inspections.getWave());
-                        System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
-                        drawOneInspectionsHRnSPO2(inspections, /*++counterInspections,*/  counterPoints++);
-                        showHRnSPO2Num(inspections);
-
-                    } else {
-                        controller.disableAll();
-                        Platform.runLater(() -> {
-                            controller.heartRateLabel.setText("0");
-                            controller.spo2Label.setText("0");
-                        });
-                    }
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        System.err.println("Interrupt checking ready");
-                    }
-
-                } while (!controller.isTesting && !isInterrupted());
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -515,15 +385,12 @@ public class BioimpedanceController {
         prepareChart();
     }
 
-    void enableAll() {
-        startButton.setDisable(false);
-    }
-
     void disableAll() {
         startButton.setDisable(true);
     }
 
-    //Hypoxia chart
+    //удаление всех данных с графика гипоксии
+    //установка размеров графика по оси Х
     private void prepareChart() {
         chart.getData().clear();
 
@@ -536,47 +403,47 @@ public class BioimpedanceController {
 
         //set size of UpperBound of Chart
         double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
-        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound / 10);
+        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound / 50);
 
         // Add Chart Series
         chart.getData().addAll(seriesHR, seriesSPO2);
     }
 
+    //установка флага начала тестирования
+    //прерывание режима проверки оборудования
     private void beforeTest() {
 
         isTesting = true;
         checkReadyThread.interrupt();
-//        disableAll();
-        prepareChart();
+
         System.err.println("Before test");
     }
 
+    //установка флага завершения тестирвоания
+    //установка заглушки для графика пульсовой волны
+    //переход в режим проверки оборудования
     void afterTest() {
         isTesting = false;
         seconds = 0;
+        equipmentService.setMockWavesValues();
         startChecking();
+
         System.err.println("After test");
     }
 
-    //отображение значений SPO2 и HR
-    private void showHRnSPO2Num(Inspections inspections) {
-
-        Platform.runLater(() -> {
-            this.heartRateLabel.setText("" + inspections.getPulse());
-            this.spo2Label.setText("" + inspections.getSpo2());
-        });
-    }
-
-    private void drawOneInspectionsHRnSPO2 (Inspections inspections, /*int counterInspections,*/ int counterPoints){
+    //отрисовка одного значения HR и SPO2 на графике гипоксии
+    private void drawOneInspectionsHRnSPO2 (Inspections inspections, int counterPoints){
 
         seriesHR.getData().add(new XYChart.Data(counterPoints, inspections.getPulse()));
         seriesSPO2.getData().add(new XYChart.Data(counterPoints, inspections.getSpo2()));
 
+        //увеличение правой границы графика гипоксии по оси Х
         double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
         if (counterPoints > 0.8 * upperBound) {
             ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 1.33);
         }
 
+        //отражения в полях HR и SPO2 текущих значений
         Platform.runLater(() -> {
             this.heartRateLabel.setText("" + inspections.getPulse());
             this.spo2Label.setText("" + inspections.getSpo2());
@@ -585,12 +452,15 @@ public class BioimpedanceController {
 
     private void initTimeline() {
 
+        //в зависимости от режима тестирование/проверка оборудования
+        //очистка графика пульсовой волны или установка заглушки
         if (isTesting){
             equipmentService.clearWavesValue();
         } else {
             equipmentService.setMockWavesValues();
         }
 
+        //отрисовка графика сердечного ритма, пульсовой волны
         Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
             drawHeartRhythm();
             drawPulseWave();
@@ -604,6 +474,7 @@ public class BioimpedanceController {
                 pulseIsRun = false;
             }
 
+            //отражение значений в полях сенсоров рук и ног
             if (/*!isTesting*/ true) {
 
                 if (!equipmentService.isEquipmentReady()) {
@@ -618,8 +489,8 @@ public class BioimpedanceController {
                 }
             }
 
+            //отображение отсутствия значений в полях HR и SPO2
             PulseOximeterValue pulseoximeterValue = equipmentService.getLastPulseoximeterValue();
-
             if (pulseoximeterValue == null) {
                 heartRateLabel.setText("--");
                 spo2Label.setText("--");
@@ -754,10 +625,10 @@ public class BioimpedanceController {
         //TODO
 
         //Bioimpedance test & show results
-        initHeartRhythm();
-        initPulseWave();
-        initTimeline();
-        initHypoxiaChart();
+//        initHeartRhythm();
+//        initPulseWave();
+//        initTimeline();
+//        initHypoxiaChart();
 
         StartTestBioImpedance startTestBioImpedance = new StartTestBioImpedance(this, portBioimpedance);
         startTestBioImpedance.setDaemon(true);
@@ -766,6 +637,7 @@ public class BioimpedanceController {
         Task<BioimpedanceValue> bioimpedance = new Task<BioimpedanceValue>() {
             @Override
             protected BioimpedanceValue call() throws Exception {
+                //ожидание (3 сек) сбора LastRearch биоимпеданса
                 while (!equipmentService.isBioimpedanceReady()) {
                     Thread.sleep(1000);
                 }
@@ -780,19 +652,20 @@ public class BioimpedanceController {
                     pieChart.getData().add(new PieChart.Data("% Жировой массы", bioimpedanceValue.getFat() / person.getWeight()));
                     pieChart.getData().add(new PieChart.Data("% Мышечной массы", bioimpedanceValue.getMuscle() / person.getWeight()));
                     pieChart.getData().add(new PieChart.Data("% Воды", bioimpedanceValue.getAllWater() / person.getWeight()));
-
-                    //Hypoxia test
-                    testHypoxiaProgressBarTimer();
                 }
+
+                new Thread(()->{
+                    testHypoxiaProgressBarTimer();
+                    afterTest();
+                }).start();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         });
+
         Thread bioimpedanceThread = new Thread(bioimpedance);
         bioimpedanceThread.setDaemon(true);
         bioimpedanceThread.start();
-
-        afterTest();
     }
 
     class StartTestHypoxia extends Thread {
@@ -829,14 +702,17 @@ public class BioimpedanceController {
                         Inspections inspections = (Inspections) deserializeData(br.readLine());
                         equipmentService.setLastPulseoximeterValue(inspections.getPulse(), inspections.getSpo2(), inspections.getWave());
                         System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
-                        drawOneInspectionsHRnSPO2(inspections, /*++counterInspections,*/  counterPoints++);
-                        showHRnSPO2Num(inspections);
+                        if (counterPoints++ % NUMBER_OF_SKIP == 0) {
+                            drawOneInspectionsHRnSPO2(inspections,  counterPoints);
+                        }
                     } else if (data instanceof LastResearch) {
                         //TODO
+                        System.err.println(data);
                         System.err.println("Hypoxia LastrReaserch is ready");
+                        return;
                     }
 
-                } while(counterPoints <= 8312);
+                } while(true);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -892,10 +768,9 @@ public class BioimpedanceController {
 
     public void testHypoxiaProgressBarTimer () {
 
-        prepareChart();
-        StartTestHypoxia startTestHypoxia = new StartTestHypoxia(this, portHypoxia);
-        startTestHypoxia.setDaemon(true);
-        startTestHypoxia.start();
+        //увеличить границы графика для гипоксии
+        double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
+        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 50);
 
         testTime = MAX_TIME;
         progressBar.setProgress(0);
@@ -909,6 +784,17 @@ public class BioimpedanceController {
         }));
         timer.setCycleCount(testTime);
         timer.play();
+
+        equipmentService.clearWavesValue();
+        StartTestHypoxia startTestHypoxia = new StartTestHypoxia(this, portHypoxia);
+        startTestHypoxia.setDaemon(false);
+        startTestHypoxia.start();
+
+        try {
+            startTestHypoxia.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML

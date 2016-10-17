@@ -97,7 +97,6 @@ public class EquipmentServiceMock implements EquipmentService {
     }
 
 
-
     //Мишин эквипмент-мок-сервис
     /*private final List<Boolean> handsReady = new ArrayList<>();
     private final List<Boolean> legsReady = new ArrayList<>();

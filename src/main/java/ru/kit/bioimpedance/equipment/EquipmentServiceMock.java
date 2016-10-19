@@ -16,7 +16,6 @@ public class EquipmentServiceMock implements EquipmentService {
     private int biompedanceCheck = 0;
     private List<PulseOximeterValue> waves = new ArrayList<>();
     private BioimpedanceValue bioimpedanceValue = null;
-    private boolean isTesting  = false;
 
     @Override
     public PulseOximeterValue getLastPulseoximeterValue() {

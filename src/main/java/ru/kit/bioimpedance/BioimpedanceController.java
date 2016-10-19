@@ -10,30 +10,22 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.PieChart;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.util.Duration;
-import javafx.util.StringConverter;
-import ru.kit.bioimpedance.commands.CheckStatus;
-import ru.kit.bioimpedance.commands.Command;
-import ru.kit.bioimpedance.commands.Launch;
-import ru.kit.bioimpedance.commands.StartTest;
+import javafx.util.*;
+import org.json.JSONObject;
+import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
 import ru.kit.bioimpedance.equipment.*;
-import ru.kit.tonometr_comport.Result;
-import ru.kit.tonometr_comport.TonometrReader;
+import ru.kit.tonometr_comport.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 
@@ -50,7 +42,7 @@ public class BioimpedanceController {
     private int activityLevel;
     private int systBP;
     private int diastBP;
-    private int seconds;
+    private String path;
 
     public int getActivityLevel() {
         return activityLevel;
@@ -72,7 +64,7 @@ public class BioimpedanceController {
         return isMan;
     }
 
-    public void setIsMan(boolean isMan) {
+    public void setMan(boolean isMan) {
         this.isMan = isMan;
     }
 
@@ -109,15 +101,23 @@ public class BioimpedanceController {
     }
 
     public int getSeconds() {
-        return seconds;
+        return secondsForTest;
     }
 
     public void setSeconds(int seconds) {
-        this.seconds = seconds;
+        this.secondsForTest = seconds;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 
     private int count = 0;
-    private int testTime = 140;
+    private int secondsForTest = 140;
     private final List<CustomPoint> heartRatePoints = new ArrayList<>();
     private final List<Integer> pulseWavePoints = new ArrayList<>();
     private final Color BACKGROUND_COLOR = Color.valueOf("#4b5962");
@@ -138,6 +138,8 @@ public class BioimpedanceController {
     private boolean isTesting = false;
     Thread checkReadyThread;
     private static final int NUMBER_OF_SKIP = 5;
+    private BioimpedanceStage stage;
+    private Map<String, Inspection> summorizedLasResearch = new HashMap<>();
 
     @FXML
     private Canvas heartRhythm;
@@ -173,7 +175,7 @@ public class BioimpedanceController {
     @FXML
     private ProgressBar progressBar;
 
-    private final Person person = new Person(75, 175);
+//    private final Person person = new Person(75, 175);
 
     @FXML
     private void initialize() {
@@ -187,6 +189,13 @@ public class BioimpedanceController {
         diastolicPressureLabel.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
 
         startChecking();
+    }
+
+    @FXML
+    private void cancel () {stage.close();}
+
+    public void setStage (BioimpedanceStage stage) {
+        this.stage = stage;
     }
 
     //начать режим проверки оборудования - графики и поля приложени заполняются значениями
@@ -221,10 +230,10 @@ public class BioimpedanceController {
                  BufferedWriter outputB = new BufferedWriter(new OutputStreamWriter(bioSocket.getOutputStream()));
                  BufferedReader brB = new BufferedReader(new InputStreamReader(bioSocket.getInputStream()))
             ) {
-/*                Command command = new Launch(controller.getAge(), controller.isMan(),
+                Command command = new Launch(controller.getAge(), controller.isMan(),
                         controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
-                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
-                Command command = new Launch(20, true, 65, 175, 5, 120, 80, 140);
+                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());
+
                 sendCommand(command, outputB);
                 sendCommand(command, outputH);
 
@@ -389,6 +398,10 @@ public class BioimpedanceController {
         startButton.setDisable(true);
     }
 
+    void enableAll(){
+        startButton.setDisable(false);
+    }
+
     //удаление всех данных с графика гипоксии
     //установка размеров графика по оси Х
     private void prepareChart() {
@@ -415,6 +428,7 @@ public class BioimpedanceController {
 
         isTesting = true;
         checkReadyThread.interrupt();
+        disableAll();
 
         System.err.println("Before test");
     }
@@ -424,7 +438,10 @@ public class BioimpedanceController {
     //переход в режим проверки оборудования
     void afterTest() {
         isTesting = false;
-        seconds = 0;
+        summorizedLasResearch = new HashMap<>();
+        secondsForTest = 140;
+        double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
+        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound / 60);
         equipmentService.setMockWavesValues();
         startChecking();
 
@@ -439,7 +456,7 @@ public class BioimpedanceController {
 
         //увеличение правой границы графика гипоксии по оси Х
         double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
-        if (counterPoints > 0.8 * upperBound) {
+        if (counterPoints > 0.95 * upperBound) {
             ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 1.33);
         }
 
@@ -500,10 +517,13 @@ public class BioimpedanceController {
 
                 spo2Label.setText(pulseoximeterValue.getSpo2() != null ?
                                     pulseoximeterValue.getSpo2().toString() : "--");*/
-
-                startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
-                        && equipmentService.isHandsReady() && equipmentService.isLegsReady()
-                        /*&& diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0)*/ ));
+                if (!isTesting) {
+                    startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
+                        /*&& equipmentService.isHandsReady() && equipmentService.isLegsReady()
+                        && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0*/));
+                } else {
+                    disableAll();
+                }
             }
 
             /*if (!testStarted) {
@@ -620,16 +640,10 @@ public class BioimpedanceController {
     private void startTest(ActionEvent actionEvent) {
 
         beforeTest();
-
         //Tonometr test
         //TODO
 
         //Bioimpedance test & show results
-//        initHeartRhythm();
-//        initPulseWave();
-//        initTimeline();
-//        initHypoxiaChart();
-
         StartTestBioImpedance startTestBioImpedance = new StartTestBioImpedance(this, portBioimpedance);
         startTestBioImpedance.setDaemon(true);
         startTestBioImpedance.start();
@@ -649,13 +663,20 @@ public class BioimpedanceController {
                 BioimpedanceValue bioimpedanceValue = bioimpedance.get();
                 if (bioimpedance != null) {
                     pieChart.getData().clear();
-                    pieChart.getData().add(new PieChart.Data("% Жировой массы", bioimpedanceValue.getFat() / person.getWeight()));
-                    pieChart.getData().add(new PieChart.Data("% Мышечной массы", bioimpedanceValue.getMuscle() / person.getWeight()));
-                    pieChart.getData().add(new PieChart.Data("% Воды", bioimpedanceValue.getAllWater() / person.getWeight()));
+                    double fat = 100 * bioimpedanceValue.getFat() / this.getWeight();
+                    double mm = 100 * bioimpedanceValue.getMuscle() / this.getWeight();
+                    double tbw =  100 * bioimpedanceValue.getAllWater() / this.getWeight();
+                    pieChart.getData().add(new PieChart.Data(String.format("Жировая масса \n%.2f%%", fat), fat));
+                    pieChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
+                    pieChart.getData().add(new PieChart.Data(String.format("Вода \n%.2f%%", tbw), tbw));
                 }
 
                 new Thread(()->{
+                    //для отображения "---" в полях сенсоров рук/ног
+                    equipmentService.setEquipmentReady(false);
+
                     testHypoxiaProgressBarTimer();
+                    writeJSON(summorizedLasResearch);
                     afterTest();
                 }).start();
             } catch (InterruptedException | ExecutionException e) {
@@ -685,9 +706,6 @@ public class BioimpedanceController {
                  BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))
 
             ){
-/*                Command command = new Launch(controller.getAge(), controller.isMan(),
-                        controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
-                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
                 Command command = new StartTest();
                 sendCommand(command, output);
 
@@ -699,16 +717,17 @@ public class BioimpedanceController {
                     Data data = deserializeData(line);
 
                     if (data instanceof Inspections) {
-                        Inspections inspections = (Inspections) deserializeData(br.readLine());
+                        Inspections inspections = (Inspections) data;
                         equipmentService.setLastPulseoximeterValue(inspections.getPulse(), inspections.getSpo2(), inspections.getWave());
-                        System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
                         if (counterPoints++ % NUMBER_OF_SKIP == 0) {
+                            System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
                             drawOneInspectionsHRnSPO2(inspections,  counterPoints);
                         }
                     } else if (data instanceof LastResearch) {
                         //TODO
                         System.err.println(data);
                         System.err.println("Hypoxia LastrReaserch is ready");
+                        summorizedLasResearch.putAll(((LastResearch) data).getInspections());
                         return;
                     }
 
@@ -735,9 +754,7 @@ public class BioimpedanceController {
                  BufferedWriter output = new BufferedWriter(new OutputStreamWriter(Socket.getOutputStream()));
                  BufferedReader br = new BufferedReader(new InputStreamReader(Socket.getInputStream()))
             ) {
-/*                Command command = new Launch(controller.getAge(), controller.isMan(),
-                        controller.getWeight(), controller.getHeight(), controller.getActivityLevel(),
-                        controller.getSystBP(), controller.getDiastBP(), controller.getSeconds());*/
+
                 Command command = new StartTest();
                 sendCommand(command, output);
 
@@ -749,14 +766,20 @@ public class BioimpedanceController {
 
                     if (data instanceof LastResearch) {
                         LastResearch lastResearch = (LastResearch) data;
-                        double ffm = lastResearch.getInspections().get("FFM").getValue();
+                        double fat = lastResearch.getInspections().get("FAT").getValue();
                         double tbw = lastResearch.getInspections().get("TBW").getValue();
                         double mm = lastResearch.getInspections().get("MM").getValue();
-                        equipmentService.setBioimpedanceValue(new BioimpedanceValue(ffm, tbw, mm));
+                        equipmentService.setBioimpedanceValue(new BioimpedanceValue(fat, tbw, mm));
 
                         System.err.println("Bioimpedance LastResearch is ready");
                         System.err.println(lastResearch);
+                        summorizedLasResearch.putAll(lastResearch.getInspections());
                         break;
+                    }
+
+                    else if( data instanceof ReadyStatus) {
+                        ReadyStatus readyStatus = (ReadyStatus) data;
+
                     }
 
                 } while (isTesting);
@@ -768,21 +791,21 @@ public class BioimpedanceController {
 
     public void testHypoxiaProgressBarTimer () {
 
-        //увеличить границы графика для гипоксии
+        //увеличить правой границы оси Х графика для гипоксии
         double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
-        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 50);
+        ((NumberAxis) chart.getXAxis()).setUpperBound(upperBound * 60);
 
-        testTime = MAX_TIME;
+        secondsForTest = MAX_TIME;
         progressBar.setProgress(0);
-        timeLabel.setText(String.format("%d:%02d", testTime / 60, testTime % 60));
+        timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
 
         Timeline timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
-            testTime--;
-            timeLabel.setText(String.format("%d:%02d", testTime / 60, testTime % 60));
-            double value = ((double) (MAX_TIME - testTime)) / MAX_TIME;
+            secondsForTest--;
+            timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
+            double value = ((double) (MAX_TIME - secondsForTest)) / MAX_TIME;
             progressBar.setProgress(value);
         }));
-        timer.setCycleCount(testTime);
+        timer.setCycleCount(secondsForTest);
         timer.play();
 
         equipmentService.clearWavesValue();
@@ -883,6 +906,56 @@ public class BioimpedanceController {
         double heartRateInSecond = heartRate / 60.0D;
         return (int) (intervalInSeconds * heartRateInSecond);
     }
+
+    private JSONObject createJSON(Map<String, Inspection> inspections) {
+
+        JSONObject jsonObject = new JSONObject();
+
+        for (InspectionNames name : InspectionNames.values()) {
+
+            JSONObject innerJSONObject = new JSONObject();
+            Inspection inspection = inspections.get(name.toString());
+            innerJSONObject.put("power", inspection.getValue());
+            innerJSONObject.put("min", inspection.getMin());
+            innerJSONObject.put("max", inspection.getMax());
+
+            jsonObject.put(name.toString().toLowerCase(), innerJSONObject);
+        }
+
+        return jsonObject;
+    }
+
+    private void writeJSON(Map<String, Inspection> inspections) {
+        try {
+            BufferedWriter e = new BufferedWriter(new FileWriter(new File(path.concat("bioImp_output_file.json"))));
+            Throwable var2 = null;
+
+            try {
+                e.write(this.createJSON(inspections).toString());
+            } catch (Throwable var12) {
+                var2 = var12;
+                throw var12;
+            } finally {
+                if(var2 != null) {
+                    try {
+                        e.close();
+                    } catch (Throwable var11) {
+                        var2.addSuppressed(var11);
+                    }
+                } else {
+                    e.close();
+                }
+            }
+        } catch (IOException var14) {
+            var14.printStackTrace();
+        }
+
+    }
+}
+
+//обозначения показателей, записываемых в результирующий JSON
+enum InspectionNames {
+    FAT, TBW, ECW, ICW, MM, STRESS, LF, HF, BIOAGE
 }
 
 class PressureConverter extends StringConverter<Number> {

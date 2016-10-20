@@ -87,7 +87,7 @@
                         <Font name="Calibri" size="21.0" />
                     </font>
                 </Button>
-                <Button fx:id="cancel_button" mnemonicParsing="false" onAction="#startTest" text="ОТМЕНА" GridPane.columnIndex="5" GridPane.halignment="RIGHT">
+                <Button fx:id="cancel_button" mnemonicParsing="false" onAction="#cancel" text="ОТМЕНА" GridPane.columnIndex="5" GridPane.halignment="RIGHT">
                     <font>
                         <Font name="Calibri" size="21.0" />
                     </font>
@@ -95,7 +95,7 @@
                         <Insets right="15.0" top="17.0" />
                     </GridPane.margin>
                 </Button>
-                <Button fx:id="ok_button" disable="true" mnemonicParsing="false" onAction="#startTest" text="ОК" GridPane.columnIndex="6" GridPane.halignment="RIGHT">
+                <Button fx:id="okButton" disable="true" mnemonicParsing="false" onAction="#ok" text="ОК" GridPane.columnIndex="6" GridPane.halignment="RIGHT">
                     <font>
                         <Font name="Calibri" size="21.0" />
                     </font>

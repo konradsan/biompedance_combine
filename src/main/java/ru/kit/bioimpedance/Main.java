@@ -12,7 +12,7 @@ public class Main extends Application {
         Parent root = new Pane();
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root));
-        Stage stage = new BioimpedanceStage(20, true, 65, 175, 5, 120, 80, "");
+        Stage stage = new BioimpedanceStage(30, true, 54, 166, 5, 120, 80, "");
 
         stage.show();
     }

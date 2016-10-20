@@ -19,8 +19,13 @@ public class EquipmentServiceMock implements EquipmentService {
 
     @Override
     public PulseOximeterValue getLastPulseoximeterValue() {
-        if (waves.size() == 0) return new PulseOximeterValue(0,0,0);
-        else return waves.size() > index ? waves.get(index++) : waves.get(waves.size() - 1);
+
+        if (waves.size() == 0) {
+            return new PulseOximeterValue(0, 0, 0);
+        }
+        else {
+            return waves.size() > index ? waves.get(index++) : waves.get(waves.size() - 1);
+        }
     }
 
     @Override

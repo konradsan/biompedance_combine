@@ -899,27 +899,95 @@ public class BioimpedanceController {
         }
     }
 
+    private class TonometrData{
+        int systP;
+        int diastP;
+
+        public TonometrData(int systP, int diastP){this.systP = systP; this.diastP = diastP;}
+    }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        TonometrReader tonometr = new TonometrReader("COM3");
-        Task<Result> longTask = new Task<Result>() {
+        measureNewTonometr();
+    }
+
+
+
+    private void measureNewTonometr() {
+        Task<TonometrData> longTask = new Task<TonometrData>() {
             @Override
-            protected Result call() throws Exception {
-                synchronized (tonometr) {
-                    tonometr.callPort();
-                    while (!tonometr.isReady()) {
-                        tonometr.wait(500);
+            protected TonometrData call() throws Exception {
+
+                try (Socket socket = new Socket("localhost", 8084)) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
+                    sendCommand(new Launch(getAge(), isMan(), getWeight(), getHeight(), getActivityLevel(), 0, 0, 0), output);
+                    sendCommand(new CheckStatus(), output);
+
+
+                    ReadyStatusTonometr readyStatusTonometr = (ReadyStatusTonometr) deserializeData(br.readLine());
+                    boolean isReady = readyStatusTonometr.isReady();
+
+                    if (isReady) {
+
+                    } else {
+                        System.err.println("Error: Cannot open Tonometr!");
+                        return null;
                     }
+
+                    sendCommand(new StartTest(), output);
+                    while (true) {
+
+
+                        String line = br.readLine();
+
+                        if(line == null) continue;
+
+                        Data data = deserializeData(line);
+                        if (data instanceof InspectionsTonometr) {
+                            InspectionsTonometr inspections = (InspectionsTonometr) data;
+                            System.err.println(inspections);
+
+                            if (inspections.getStatus() == 0) {
+                                if(inspections.getErrors() == 0){
+                                    sendCommand(new GetLastResearch(), output);
+                                    LastResearch lastResearch = (LastResearch)deserializeData(br.readLine());
+                                    System.err.println(lastResearch);
+
+                                    int sbp = (int)lastResearch.getInspections().get("systBP").getValue();
+                                    int dbp = (int)lastResearch.getInspections().get("distBP").getValue();
+
+                                    return new TonometrData(sbp, dbp);
+                                }
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+
+
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            System.err.println("Testing is interrupted");
+                            break;
+                        }
+                    }
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                return tonometr.getResult();
+                return null;
+
             }
         };
 
         longTask.setOnSucceeded(event -> {
-            Result result = longTask.getValue();
-            if (result == Result.SUCCESS) {
-                systolicPressureProperty.setValue(tonometr.getPressure().getSys());
-                diastolicPressureProperty.setValue(tonometr.getPressure().getDia());
+            TonometrData data = longTask.getValue();
+            if (data != null && data.systP > 0 && data.systP < 255 && data.diastP > 0 && data.diastP < 255) {
+                systolicPressureProperty.setValue(data.systP);
+                diastolicPressureProperty.setValue(data.diastP);
             } else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Измерение давления");

@@ -447,7 +447,7 @@ public class BioimpedanceController {
     private void beforeTest() {
 
         isTesting = true;
-        secondsForTest = 140;
+        secondsForTest = MAX_TIME;
         haveBioLastResearch = false;
         haveHypoLastResearch = false;
         summorizedLastResearch = new HashMap<>();
@@ -464,7 +464,7 @@ public class BioimpedanceController {
         isTesting = false;
         equipmentService.setMockWavesValues();
         startChecking();
-        secondsForTest = 140;
+        secondsForTest = MAX_TIME;
 
         System.err.println("After test");
     }
@@ -708,9 +708,14 @@ public class BioimpedanceController {
                 }
                 new Thread(() -> {
                     //для отображения "---" в полях сенсоров рук/ног
-                    equipmentService.setEquipmentReady(false);
+                    //equipmentService.setEquipmentReady(false);
 
                     testHypoxiaProgressBarTimer();
+                    try {
+                        Thread.sleep(2000); //Ждем пока progressBar дойдет до конца, drycode...
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     afterTest();
                 }).start();
             } catch (InterruptedException | ExecutionException e) {
@@ -735,7 +740,6 @@ public class BioimpedanceController {
         }
 
         public void run() {
-
             try (Socket socket = new Socket("localhost", this.port);
                  BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                  BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))
@@ -767,7 +771,7 @@ public class BioimpedanceController {
                         return;
                     }
 
-                } while(true);
+                } while(true) ;
 
             } catch (Exception ex) {
                 ex.printStackTrace();

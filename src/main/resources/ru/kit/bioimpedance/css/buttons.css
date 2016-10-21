@@ -1,8 +1,8 @@
-#ok_button {
+#okButton {
     -fx-background-color: #36804d;
     -fx-text-fill: white;
 }
-#ok_button:hover {
+#okButton:hover {
     -fx-background-color: #39ad77;
 }
 

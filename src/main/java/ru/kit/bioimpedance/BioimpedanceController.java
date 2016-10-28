@@ -614,7 +614,7 @@ public class BioimpedanceController {
         gc.setStroke(Color.YELLOW);
         gc.strokeLine(count, 0, count, pulseWave.getHeight());
     }
-
+    // TODO
     private void drawHeartRhythm() {
         if (!pulseIsRun) {
             if (equipmentService.getLastPulseoximeterValue() != null) {
@@ -687,8 +687,10 @@ public class BioimpedanceController {
             @Override
             protected BioimpedanceValue call() throws Exception {
                 //ожидание (3 сек) сбора LastRearch биоимпеданса
+                int i=1;
                 while (!equipmentService.isBioimpedanceReady()) {
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
+                    System.out.println(i++);
                 }
                 return equipmentService.getBioimpedanceValue();
             }

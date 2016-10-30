@@ -294,10 +294,11 @@ public class BioimpedanceController {
                     }
 
                     if (readyStatusH.isPulse()) {
-                        equipmentService.setMockWavesValues();
+                        //equipmentService.setMockWavesValues();
                         Inspections inspections = (Inspections) deserializeData(brH.readLine());
                         System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
                         drawOneInspectionsHRnSPO2(inspections, counterPoints++);
+
 
                     } else {
                         equipmentService.clearWavesValue();
@@ -338,19 +339,18 @@ public class BioimpedanceController {
                 equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
 
         } else {
-
             int distanceToNextPulse = distanceToNextPulse(equipmentService.getLastPulseoximeterValue().getHeartRate());
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 5, START));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, P));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, PR_START));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 20, PR_FINISH));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 25, Q));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 27, R));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 29, S));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 34, ST_START));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 42, ST_FINISH));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 50, T));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 54, FINISH));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 0, START));
+            //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, P));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 1, PR_START));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 1, PR_FINISH));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 6, Q));//1ый низ
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 8, R));//1ый верх
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, S));//2ой низ
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, ST_START));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, ST_FINISH));
+            //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 50, T));
+            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, FINISH));
         }
     }
 
@@ -495,7 +495,7 @@ public class BioimpedanceController {
         if (isTesting){
             equipmentService.clearWavesValue();
         } else {
-            equipmentService.setMockWavesValues();
+            //equipmentService.setMockWavesValues();
         }
 
         //отрисовка графика сердечного ритма, пульсовой волны
@@ -503,6 +503,7 @@ public class BioimpedanceController {
             drawHeartRhythm();
             drawPulseWave();
             count = (int) ((count + 1) % heartRhythm.getWidth());
+            System.out.println(count);
             if (count == 0) {
                 heartRatePoints.clear();
                 pulseWavePoints.clear();
@@ -636,11 +637,11 @@ public class BioimpedanceController {
             if (point.getX() <= count) {
                 if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
                     gc.lineTo(point.getX(), centerY);
-                    if (heartRatePoints.get(i + 2).getX() <= count) {
+                    /*if (heartRatePoints.get(i + 2).getX() <= count) {
                         gc.bezierCurveTo(point.getX(), centerY + point.getType().getDeltaY(),
                                 heartRatePoints.get(i + 1).getX(), centerY + heartRatePoints.get(i + 1).getType().getDeltaY(),
                                 heartRatePoints.get(i + 2).getX(), centerY + heartRatePoints.get(i + 2).getType().getDeltaY());
-                    }
+                    }*/
                 }
                 if (!(point.getType().equals(START) ||
                         point.getType().equals(P) ||
@@ -712,13 +713,13 @@ public class BioimpedanceController {
                     //для отображения "---" в полях сенсоров рук/ног
                     //equipmentService.setEquipmentReady(false);
 
-                    testHypoxiaProgressBarTimer();
+                    BioimpedanceController.this.testHypoxiaProgressBarTimer();
                     try {
                         Thread.sleep(2000); //Ждем пока progressBar дойдет до конца, drycode...
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    afterTest();
+                    BioimpedanceController.this.afterTest();
                 }).start();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -1011,9 +1012,9 @@ public class BioimpedanceController {
     }
 
     private int distanceToNextPulse(int heartRate) {
-        int intervalInSeconds = 1000 / TIME_BETWEEN_FRAMES;
+        int intervalInSeconds = 1000/TIME_BETWEEN_FRAMES;
         double heartRateInSecond = heartRate / 60.0D;
-        return (int) (intervalInSeconds * heartRateInSecond);
+        return (int) (intervalInSeconds / heartRateInSecond) - 15;
     }
 
     private JSONObject createJSON(Map<String, Inspection> inspections) {

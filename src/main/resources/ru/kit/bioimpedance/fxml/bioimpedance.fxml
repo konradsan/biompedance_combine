@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.canvas.*?>
-<?import javafx.scene.chart.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
@@ -20,301 +9,323 @@
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="500.0" minWidth="900.0" prefHeight="727.0" prefWidth="1302.0" stylesheets="@../css/buttons.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.kit.bioimpedance.BioimpedanceController">
-    <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-    </columnConstraints>
-    <rowConstraints>
-        <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="410.0" vgrow="SOMETIMES" />
-      <RowConstraints maxHeight="35.0" minHeight="35.0" prefHeight="35.0" vgrow="SOMETIMES" />
-        <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
-    </rowConstraints>
-    <children>
-        <GridPane style="-fx-background-color: #52616B;">
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" />
-                <ColumnConstraints hgrow="ALWAYS" maxWidth="800.0" minWidth="10.0" prefWidth="799.0" />
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
-            </rowConstraints>
-            <children>
-                <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
-                    <image>
-                        <Image url="@../image/arrow.png" />
-                    </image>
-                </ImageView>
-                <Label text="Базовый тест" textFill="WHITE" GridPane.columnIndex="1">
-                    <font>
-                        <Font name="Calibri" size="24.0" />
-                    </font>
-                </Label>
-            </children>
-        </GridPane>
-        <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="82.0" prefWidth="1007.0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3">
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="132.0" minWidth="132.0" prefWidth="132.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="305.0" minWidth="305.0" prefWidth="305.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="230.0" minWidth="230.0" prefWidth="230.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="129.0" prefWidth="130.0" />
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="85.0" minWidth="85.0" prefWidth="85.0" />
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
-            </rowConstraints>
-            <children>
-                <Button fx:id="startButton" mnemonicParsing="false" onAction="#startTest" text="СТАРТ">
-                    <GridPane.margin>
-                        <Insets left="15.0" top="17.0" />
-                    </GridPane.margin>
-                    <graphic>
-                        <ImageView fitHeight="16.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
-                            <image>
-                                <Image url="@../image/start_icon.png" />
-                            </image>
-                        </ImageView>
-                    </graphic>
-                    <font>
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="700.0" minWidth="900.0" prefHeight="727.0" prefWidth="1302.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.kit.bioimpedance.BioimpedanceController">
+   <children>
+      <GridPane stylesheets="@../css/buttons.css">
+          <columnConstraints>
+              <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          </columnConstraints>
+          <rowConstraints>
+              <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
+              <RowConstraints maxHeight="1.7976931348623157E308" minHeight="-Infinity" prefHeight="410.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="35.0" minHeight="35.0" prefHeight="35.0" vgrow="SOMETIMES" />
+              <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
+          </rowConstraints>
+          <children>
+              <GridPane style="-fx-background-color: #52616B;">
+                  <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" />
+                      <ColumnConstraints hgrow="ALWAYS" maxWidth="800.0" minWidth="10.0" prefWidth="799.0" />
+                  </columnConstraints>
+                  <rowConstraints>
+                      <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
+                  </rowConstraints>
+                  <children>
+                      <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+                          <image>
+                              <Image url="@../image/arrow.png" />
+                          </image>
+                      </ImageView>
+                      <Label text="Базовый тест" textFill="WHITE" GridPane.columnIndex="1">
+                          <font>
+                              <Font name="Calibri" size="24.0" />
+                          </font>
+                      </Label>
+                  </children>
+              </GridPane>
+              <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="82.0" prefWidth="1007.0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3">
+                  <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="132.0" minWidth="132.0" prefWidth="132.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="305.0" minWidth="305.0" prefWidth="305.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="230.0" minWidth="230.0" prefWidth="230.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" minWidth="129.0" prefWidth="130.0" />
+                      <ColumnConstraints hgrow="SOMETIMES" maxWidth="85.0" minWidth="85.0" prefWidth="85.0" />
+                  </columnConstraints>
+                  <rowConstraints>
+                      <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
+                  </rowConstraints>
+                  <children>
+                      <Button fx:id="startButton" mnemonicParsing="false" onAction="#startTest" text="СТАРТ">
+                          <GridPane.margin>
+                              <Insets left="15.0" top="17.0" />
+                          </GridPane.margin>
+                          <graphic>
+                              <ImageView fitHeight="16.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
+                                  <image>
+                                      <Image url="@../image/start_icon.png" />
+                                  </image>
+                              </ImageView>
+                          </graphic>
+                          <font>
+                              <Font name="Calibri" size="21.0" />
+                          </font>
+                      </Button>
+                      <Button fx:id="cancel_button" mnemonicParsing="false" onAction="#cancel" text="ОТМЕНА" GridPane.columnIndex="5" GridPane.halignment="RIGHT">
+                          <font>
+                              <Font name="Calibri" size="21.0" />
+                          </font>
+                          <GridPane.margin>
+                              <Insets right="15.0" top="17.0" />
+                          </GridPane.margin>
+                      </Button>
+                      <Button fx:id="okButton" disable="true" mnemonicParsing="false" onAction="#ok" text="ОК" GridPane.columnIndex="6" GridPane.halignment="RIGHT">
+                          <font>
+                              <Font name="Calibri" size="21.0" />
+                          </font>
+                          <GridPane.margin>
+                              <Insets right="22.0" top="17.0" />
+                          </GridPane.margin>
+                      </Button>
+                  <GridPane GridPane.columnIndex="1">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="100.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="155.0" prefWidth="150.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="51.0" minHeight="10.0" prefHeight="51.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label fx:id="systolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="---" textFill="WHITE" GridPane.halignment="CENTER" GridPane.rowIndex="1">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                        </Label>
+                        <Label fx:id="diastolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                        </Label>
+                        <Hyperlink onAction="#inputSystolicPressure" text="Систолическое давление" />
+                        <Hyperlink onAction="#inputDiastolicPressure" text="Диастолическое давление" GridPane.columnIndex="1" />
+                     </children>
+                  </GridPane>
+                  <Button fx:id="measurePressureButton" mnemonicParsing="false" onAction="#measurePressure" text="Измерение давления" GridPane.columnIndex="2">
+                     <GridPane.margin>
+                        <Insets left="5.0" top="19.0" />
+                     </GridPane.margin>
+                     <font>
                         <Font name="Calibri" size="21.0" />
-                    </font>
-                </Button>
-                <Button fx:id="cancel_button" mnemonicParsing="false" onAction="#cancel" text="ОТМЕНА" GridPane.columnIndex="5" GridPane.halignment="RIGHT">
-                    <font>
-                        <Font name="Calibri" size="21.0" />
-                    </font>
-                    <GridPane.margin>
-                        <Insets right="15.0" top="17.0" />
-                    </GridPane.margin>
-                </Button>
-                <Button fx:id="okButton" disable="true" mnemonicParsing="false" onAction="#ok" text="ОК" GridPane.columnIndex="6" GridPane.halignment="RIGHT">
-                    <font>
-                        <Font name="Calibri" size="21.0" />
-                    </font>
-                    <GridPane.margin>
-                        <Insets right="22.0" top="17.0" />
-                    </GridPane.margin>
-                </Button>
-            <GridPane GridPane.columnIndex="1">
+                     </font>
+                  </Button>
+                  <GridPane GridPane.columnIndex="3">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="51.0" minHeight="10.0" prefHeight="51.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label text="Сенсор рук" />
+                        <Label text="Сенсор ног" GridPane.columnIndex="1" />
+                        <Label fx:id="handsReadyLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="OFF" textFill="RED" GridPane.rowIndex="1">
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="legsReadyLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="OFF" textFill="RED" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </GridPane>
+                  <GridPane GridPane.columnIndex="4">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
+                      <RowConstraints maxHeight="58.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label text="ЧСС" />
+                        <Label text="SpO2" GridPane.columnIndex="1" />
+                        <Label fx:id="heartRateLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.halignment="CENTER" GridPane.rowIndex="1">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                        </Label>
+                        <Label fx:id="spo2Label" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets left="5.0" right="5.0" />
+                           </GridPane.margin>
+                        </Label>
+                     </children>
+                  </GridPane>
+                  </children>
+              </GridPane>
+            <GridPane fx:id="innerGrid" GridPane.rowIndex="1">
               <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="100.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="155.0" prefWidth="150.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
               </columnConstraints>
               <rowConstraints>
-                <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="51.0" minHeight="10.0" prefHeight="51.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="58.0" minHeight="58.0" prefHeight="58.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="1.7976931348623157E308" minHeight="147.0" prefHeight="147.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="58.0" minHeight="58.0" prefHeight="58.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="1.7976931348623157E308" minHeight="147.0" prefHeight="147.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Label fx:id="systolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="---" textFill="WHITE" GridPane.halignment="CENTER" GridPane.rowIndex="1">
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
+                  <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;">
+                     <children>
+                        <Label layoutX="14.0" layoutY="21.0" text="Определение ритма сердца">
+                           <font>
+                              <Font name="Calibri Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
                      <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
+                        <Insets left="5.0" right="3.0" top="5.0" />
                      </GridPane.margin>
-                  </Label>
-                  <Label fx:id="diastolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1">
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
+                  </Pane>
+                  <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.columnIndex="1">
+                     <children>
+                        <Label layoutX="14.0" layoutY="21.0" text="Электрическая проводимость">
+                           <font>
+                              <Font name="Calibri Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
                      <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
+                        <Insets left="3.0" right="5.0" top="5.0" />
                      </GridPane.margin>
-                  </Label>
-                  <Hyperlink onAction="#inputSystolicPressure" text="Систолическое давление" />
-                  <Hyperlink onAction="#inputDiastolicPressure" text="Диастолическое давление" GridPane.columnIndex="1" />
+                  </Pane>
+                  <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.rowIndex="2">
+                     <children>
+                        <Label layoutX="14.0" layoutY="21.0" text="Цифровая пульсовая волна">
+                           <font>
+                              <Font name="Calibri Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <GridPane.margin>
+                        <Insets left="5.0" right="3.0" top="5.0" />
+                     </GridPane.margin>
+                  </Pane>
+                  <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                     <children>
+                        <Label layoutX="14.0" layoutY="21.0" text="SpO2 [%]">
+                           <font>
+                              <Font name="Calibri Bold" size="15.0" />
+                           </font>
+                        </Label>
+                        <Label layoutX="83.0" layoutY="21.0" text="ЧСС [УдМ]">
+                           <font>
+                              <Font name="Calibri Bold" size="15.0" />
+                           </font>
+                        </Label>
+                     </children>
+                     <GridPane.margin>
+                        <Insets left="3.0" right="5.0" top="5.0" />
+                     </GridPane.margin>
+                  </Pane>
+                  <Canvas fx:id="heartRhythm" height="200.0" style="-fx-background-color: #FF0000;" width="561.0" GridPane.rowIndex="1">
+                     <GridPane.margin>
+                        <Insets left="5.0" right="3.0" />
+                     </GridPane.margin>
+                  </Canvas>
+                  <Canvas fx:id="pulseWave" height="200.0" width="561.0" GridPane.rowIndex="3">
+                     <GridPane.margin>
+                        <Insets left="5.0" right="3.0" />
+                     </GridPane.margin>
+                  </Canvas>
+                  <PieChart fx:id="pieChart" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" stylesheets="@../css/piechart.css" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                     <GridPane.margin>
+                        <Insets left="3.0" right="5.0" />
+                     </GridPane.margin>
+                  </PieChart>
+                   <GridPane fx:id="forChart" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                       <columnConstraints>
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                       </columnConstraints>
+                       <rowConstraints>
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                       </rowConstraints>
+                   </GridPane>
                </children>
             </GridPane>
-            <Button fx:id="measurePressureButton" mnemonicParsing="false" onAction="#measurePressure" text="Измерение давления" GridPane.columnIndex="2">
+            <GridPane GridPane.rowIndex="2">
                <GridPane.margin>
-                  <Insets left="5.0" top="19.0" />
+                  <Insets left="5.0" right="5.0" top="2.0" />
                </GridPane.margin>
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
+                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+               <children>
+                  <ProgressBar fx:id="progressBar" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="33.0" prefWidth="1149.0" progress="0.0" />
+                  <Label fx:id="timeLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="2:20" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER">
+                     <font>
+                        <Font name="Calibri" size="32.0" />
+                     </font>
+                     <GridPane.margin>
+                        <Insets bottom="3.0" left="3.0" top="5.0" />
+                     </GridPane.margin>
+                  </Label>
+               </children>
+            </GridPane>
+          </children>
+      </GridPane>
+      <AnchorPane fx:id="endScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
+         <children>
+            <AnchorPane opacity="0.6" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: white;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <Button fx:id="endButton" layoutX="528.0" layoutY="415.0" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" text="Вернуться в меню">
                <font>
-                  <Font name="Calibri" size="21.0" />
+                  <Font size="20.0" />
                </font>
             </Button>
-            <GridPane GridPane.columnIndex="3">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="51.0" minHeight="10.0" prefHeight="51.0" vgrow="SOMETIMES" />
-              </rowConstraints>
-               <children>
-                  <Label text="Сенсор рук" />
-                  <Label text="Сенсор ног" GridPane.columnIndex="1" />
-                  <Label fx:id="handsReadyLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="OFF" textFill="RED" GridPane.rowIndex="1">
-                     <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
-                     </GridPane.margin>
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
-                  </Label>
-                  <Label fx:id="legsReadyLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="OFF" textFill="RED" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                     <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
-                     </GridPane.margin>
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
-                  </Label>
-               </children>
-            </GridPane>
-            <GridPane GridPane.columnIndex="4">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints maxHeight="24.0" minHeight="24.0" prefHeight="24.0" vgrow="SOMETIMES" />
-                <RowConstraints maxHeight="58.0" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
-              </rowConstraints>
-               <children>
-                  <Label text="ЧСС" />
-                  <Label text="SpO2" GridPane.columnIndex="1" />
-                  <Label fx:id="heartRateLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.halignment="CENTER" GridPane.rowIndex="1">
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
-                     <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
-                     </GridPane.margin>
-                  </Label>
-                  <Label fx:id="spo2Label" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                     <font>
-                        <Font name="Calibri" size="32.0" />
-                     </font>
-                     <GridPane.margin>
-                        <Insets left="5.0" right="5.0" />
-                     </GridPane.margin>
-                  </Label>
-               </children>
-            </GridPane>
-            </children>
-        </GridPane>
-      <GridPane fx:id="innerGrid" GridPane.rowIndex="1">
-        <columnConstraints>
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints maxHeight="58.0" minHeight="58.0" prefHeight="58.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="1.7976931348623157E308" minHeight="147.0" prefHeight="147.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="58.0" minHeight="58.0" prefHeight="58.0" vgrow="SOMETIMES" />
-          <RowConstraints maxHeight="1.7976931348623157E308" minHeight="147.0" prefHeight="147.0" vgrow="SOMETIMES" />
-        </rowConstraints>
-         <children>
-            <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;">
-               <children>
-                  <Label layoutX="14.0" layoutY="21.0" text="Определение ритма сердца">
-                     <font>
-                        <Font name="Calibri Bold" size="15.0" />
-                     </font>
-                  </Label>
-               </children>
-               <GridPane.margin>
-                  <Insets left="5.0" right="3.0" top="5.0" />
-               </GridPane.margin>
-            </Pane>
-            <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.columnIndex="1">
-               <children>
-                  <Label layoutX="14.0" layoutY="21.0" text="Электрическая проводимость">
-                     <font>
-                        <Font name="Calibri Bold" size="15.0" />
-                     </font>
-                  </Label>
-               </children>
-               <GridPane.margin>
-                  <Insets left="3.0" right="5.0" top="5.0" />
-               </GridPane.margin>
-            </Pane>
-            <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.rowIndex="2">
-               <children>
-                  <Label layoutX="14.0" layoutY="21.0" text="Цифровая пульсовая волна">
-                     <font>
-                        <Font name="Calibri Bold" size="15.0" />
-                     </font>
-                  </Label>
-               </children>
-               <GridPane.margin>
-                  <Insets left="5.0" right="3.0" top="5.0" />
-               </GridPane.margin>
-            </Pane>
-            <Pane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: dadada;" GridPane.columnIndex="1" GridPane.rowIndex="2">
-               <children>
-                  <Label layoutX="14.0" layoutY="21.0" text="SpO2 [%]">
-                     <font>
-                        <Font name="Calibri Bold" size="15.0" />
-                     </font>
-                  </Label>
-                  <Label layoutX="83.0" layoutY="21.0" text="ЧСС [УдМ]">
-                     <font>
-                        <Font name="Calibri Bold" size="15.0" />
-                     </font>
-                  </Label>
-               </children>
-               <GridPane.margin>
-                  <Insets left="3.0" right="5.0" top="5.0" />
-               </GridPane.margin>
-            </Pane>
-            <Canvas fx:id="heartRhythm" height="200.0" style="-fx-background-color: #FF0000;" width="561.0" GridPane.rowIndex="1">
-               <GridPane.margin>
-                  <Insets left="5.0" right="3.0" />
-               </GridPane.margin>
-            </Canvas>
-            <Canvas fx:id="pulseWave" height="200.0" width="561.0" GridPane.rowIndex="3">
-               <GridPane.margin>
-                  <Insets left="5.0" right="3.0" />
-               </GridPane.margin>
-            </Canvas>
-            <PieChart fx:id="pieChart" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" stylesheets="@../css/piechart.css" GridPane.columnIndex="1" GridPane.rowIndex="1">
-               <GridPane.margin>
-                  <Insets left="3.0" right="5.0" />
-               </GridPane.margin>
-            </PieChart>
-             <GridPane fx:id="forChart" GridPane.columnIndex="1" GridPane.rowIndex="3">
-                 <columnConstraints>
-                     <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                 </columnConstraints>
-                 <rowConstraints>
-                     <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                 </rowConstraints>
-             </GridPane>
-         </children>
-      </GridPane>
-      <GridPane GridPane.rowIndex="2">
-         <GridPane.margin>
-            <Insets left="5.0" right="5.0" top="2.0" />
-         </GridPane.margin>
-         <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
-            <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
-         </columnConstraints>
-         <rowConstraints>
-            <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-         </rowConstraints>
-         <children>
-            <ProgressBar fx:id="progressBar" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="33.0" prefWidth="1149.0" progress="0.0" />
-            <Label fx:id="timeLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="2:20" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER">
+            <Text layoutX="517.0" layoutY="300.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Тест завершен">
                <font>
-                  <Font name="Calibri" size="32.0" />
+                  <Font size="40.0" />
                </font>
-               <GridPane.margin>
-                  <Insets bottom="3.0" left="3.0" top="5.0" />
-               </GridPane.margin>
-            </Label>
+            </Text>
          </children>
-      </GridPane>
-    </children>
-</GridPane>
+      </AnchorPane>
+   </children>
+</StackPane>

@@ -12,6 +12,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -178,6 +179,8 @@ public class BioimpedanceController {
     private ProgressBar progressBar;
     @FXML
     private Button okButton;
+    @FXML
+    private AnchorPane endScreen;
 
 
     @FXML
@@ -233,10 +236,28 @@ public class BioimpedanceController {
 
         @Override
         public void run () {
-            try (Socket hypoxiaSocket = new Socket("localhost", this.hypoxiaPort);
+
+            boolean isServicesConnected = false;
+            Socket hypoxiaSocket = null;
+            Socket bioSocket = null;
+            //Ожидание запуска сервисов пульсоксиметра и биомпиданса
+            while (!isServicesConnected) {
+                try {
+                    hypoxiaSocket = new Socket("localhost", this.hypoxiaPort);
+                    bioSocket = new Socket("localhost", this.bioPort);
+                    isServicesConnected = true;
+                } catch (IOException e) {
+                    System.err.println("Services not running. Waiting...");
+                    try {
+                        Thread.sleep(1500);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+            try (
                  BufferedWriter outputH = new BufferedWriter(new OutputStreamWriter(hypoxiaSocket.getOutputStream()));
                  BufferedReader brH = new BufferedReader(new InputStreamReader(hypoxiaSocket.getInputStream()));
-                 Socket bioSocket = new Socket("localhost", this.bioPort);
                  BufferedWriter outputB = new BufferedWriter(new OutputStreamWriter(bioSocket.getOutputStream()));
                  BufferedReader brB = new BufferedReader(new InputStreamReader(bioSocket.getInputStream()))
             ) {
@@ -318,6 +339,13 @@ public class BioimpedanceController {
                 } while (!isTesting && !isInterrupted());
             } catch (IOException ex) {
                 ex.printStackTrace();
+            }finally {
+                try {
+                    hypoxiaSocket.close();
+                    bioSocket.close();
+                } catch (IOException e) {
+                    System.err.println("Cannot close sockets connections!");
+                }
             }
         }
     }
@@ -452,6 +480,7 @@ public class BioimpedanceController {
         haveHypoLastResearch = false;
         summorizedLastResearch = new HashMap<>();
         checkReadyThread.interrupt();
+        pieChart.getData().clear();
         disableAll();
 
         System.err.println("Before test");
@@ -465,6 +494,7 @@ public class BioimpedanceController {
         equipmentService.setMockWavesValues();
         startChecking();
         secondsForTest = MAX_TIME;
+        endScreen.setVisible(true);
 
         System.err.println("After test");
     }
@@ -503,7 +533,6 @@ public class BioimpedanceController {
             drawHeartRhythm();
             drawPulseWave();
             count = (int) ((count + 1) % heartRhythm.getWidth());
-            System.out.println(count);
             if (count == 0) {
                 heartRatePoints.clear();
                 pulseWavePoints.clear();
@@ -550,6 +579,8 @@ public class BioimpedanceController {
                     startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
+                    System.out.println(pulseoximeterValue.getHeartRate() + "  HEAART");
+                    System.out.println(pulseoximeterValue.getSpo2());
 
                 }
             }
@@ -615,7 +646,6 @@ public class BioimpedanceController {
         gc.setStroke(Color.YELLOW);
         gc.strokeLine(count, 0, count, pulseWave.getHeight());
     }
-    // TODO
     private void drawHeartRhythm() {
         if (!pulseIsRun) {
             if (equipmentService.getLastPulseoximeterValue() != null) {
@@ -632,26 +662,28 @@ public class BioimpedanceController {
         double centerY = 5 * (heartRhythm.getHeight() / 8);
         gc.beginPath();
         gc.moveTo(0, centerY);
-        for (int i = 0; i < heartRatePoints.size(); i++) {
-            CustomPoint point = heartRatePoints.get(i);
-            if (point.getX() <= count) {
-                if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
-                    gc.lineTo(point.getX(), centerY);
+        if(pulseIsRun) {
+            for (int i = 0; i < heartRatePoints.size(); i++) {
+                CustomPoint point = heartRatePoints.get(i);
+                if (point.getX() <= count) {
+                    if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
+                        gc.lineTo(point.getX(), centerY);
                     /*if (heartRatePoints.get(i + 2).getX() <= count) {
                         gc.bezierCurveTo(point.getX(), centerY + point.getType().getDeltaY(),
                                 heartRatePoints.get(i + 1).getX(), centerY + heartRatePoints.get(i + 1).getType().getDeltaY(),
                                 heartRatePoints.get(i + 2).getX(), centerY + heartRatePoints.get(i + 2).getType().getDeltaY());
                     }*/
-                }
-                if (!(point.getType().equals(START) ||
-                        point.getType().equals(P) ||
-                        point.getType().equals(ST_FINISH) ||
-                        point.getType().equals(T) ||
-                        point.getType().equals(FINISH)
-                )) {
-                    CustomPoint nextPoint = heartRatePoints.get(i + 1);
-                    if (nextPoint.getX() <= count) {
-                        gc.lineTo(nextPoint.getX(), centerY + nextPoint.getType().getDeltaY());
+                    }
+                    if (!(point.getType().equals(START) ||
+                            point.getType().equals(P) ||
+                            point.getType().equals(ST_FINISH) ||
+                            point.getType().equals(T) ||
+                            point.getType().equals(FINISH)
+                    )) {
+                        CustomPoint nextPoint = heartRatePoints.get(i + 1);
+                        if (nextPoint.getX() <= count) {
+                            gc.lineTo(nextPoint.getX(), centerY + nextPoint.getType().getDeltaY());
+                        }
                     }
                 }
             }
@@ -691,7 +723,6 @@ public class BioimpedanceController {
                 int i=1;
                 while (!equipmentService.isBioimpedanceReady()) {
                     Thread.sleep(1500);
-                    System.out.println(i++);
                 }
                 return equipmentService.getBioimpedanceValue();
             }

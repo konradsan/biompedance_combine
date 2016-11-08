@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.*;
 import org.json.JSONObject;
+import pwc.BasicHeartRateMonitor;
 import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
@@ -117,6 +118,10 @@ public class BioimpedanceController {
         this.path = path;
     }
 
+    public void setComPort(String comPort) {
+        this.comPort = comPort;
+    }
+
     private int count = 0;
     private int secondsForTest = 140;
     private final List<CustomPoint> heartRatePoints = new ArrayList<>();
@@ -143,6 +148,7 @@ public class BioimpedanceController {
     private Map<String, Inspection> summorizedLastResearch = new HashMap<>();
     private boolean haveBioLastResearch = false;
     private boolean haveHypoLastResearch = false;
+    private String comPort;
 
     @FXML
     private Canvas heartRhythm;
@@ -945,7 +951,8 @@ public class BioimpedanceController {
     }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        measureNewTonometr();
+        //measureNewTonometr();
+        measureOldTonometr(comPort);
     }
 
 
@@ -1041,6 +1048,74 @@ public class BioimpedanceController {
         th.setDaemon(true);
         th.start();
     }
+
+    /* старый тонометр */
+
+    public class PressureResult {
+        boolean isOk;
+        int sys, dia, aver, hr;
+    }
+
+    private void measureOldTonometr(String comPort) {
+
+        Thread thread = new Thread(() -> {
+
+
+//            ReadDataTon rd = new ReadDataTon(comPort);
+            TonometrReader rd = new TonometrReader(comPort);
+            PressureResult result = new PressureResult();
+
+
+
+            rd.callPort();
+
+            Task<Result> longTask = new Task<Result>() {
+                @Override
+                protected Result call() throws Exception {
+                    try {
+                        synchronized (rd) {
+                            while (!rd.isReady()) {
+                                rd.wait(1000);
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return rd.getResult();
+                }
+            };
+
+            final Thread th = new Thread(longTask);
+            th.setDaemon(true);
+
+            longTask.setOnSucceeded(event -> {
+                try {
+                    Result res = longTask.getValue();
+
+                    if (res == Result.SUCCESS) {
+                        // вывод результата
+                        result.isOk = true;
+                        systolicPressureProperty.setValue((int) rd.getPressure().getSys());
+                        diastolicPressureProperty.setValue((int) rd.getPressure().getDia());
+                    } else {
+                        result.isOk = false;
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Измерение давления");
+                        alert.setHeaderText("Не удалось измерить давление");
+                        alert.setContentText("К сожалению, не удалось измерить давление. Пожалуйста, повторите попытку.");
+                        alert.showAndWait();
+                    }
+                    measurePressureButton.setDisable(false);
+                } finally {
+                    th.interrupt();
+                }
+            });
+            th.start();
+        });
+        thread.setDaemon(true);
+        thread.start();
+    }
+    /* конец старый тонометр */
 
     private int distanceToNextPulse(int heartRate) {
         int intervalInSeconds = 1000/TIME_BETWEEN_FRAMES;

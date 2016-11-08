@@ -11,7 +11,7 @@ public class BioimpedanceStage extends Stage {
     private static final String BIOIMPEDANCE_SERVICE_NAME = "BioService";
     private static final String OXI_SERVICE_NAME = "OxiService";
 
-    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path) throws IOException {
+    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, String comPort) throws IOException {
 
         execService("stop", OXI_SERVICE_NAME);
 
@@ -35,6 +35,7 @@ public class BioimpedanceStage extends Stage {
         controller.setSystBP(systBP);
         controller.setDiastBP(diastBP);
         controller.setPath(path);
+        controller.setComPort(comPort);
         controller.setStage(this);
 
         this.setScene(new Scene(root));

@@ -15,6 +15,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
@@ -315,16 +316,20 @@
       <AnchorPane fx:id="endScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
          <children>
             <AnchorPane opacity="0.6" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: white;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-            <Button fx:id="endButton" layoutX="528.0" layoutY="415.0" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" text="Вернуться в меню">
-               <font>
-                  <Font size="20.0" />
-               </font>
-            </Button>
-            <Text layoutX="517.0" layoutY="300.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Тест завершен">
-               <font>
-                  <Font size="40.0" />
-               </font>
-            </Text>
+            <VBox alignment="CENTER" layoutX="517.0" layoutY="256.8359375" prefHeight="727.0" prefWidth="1302.0" spacing="120.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Тест завершен">
+                     <font>
+                        <Font size="40.0" />
+                     </font>
+                  </Text>
+                  <Button fx:id="endButton" alignment="CENTER" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" text="Вернуться в меню" textAlignment="CENTER">
+                     <font>
+                        <Font size="20.0" />
+                     </font>
+                  </Button>
+               </children>
+            </VBox>
          </children>
       </AnchorPane>
    </children>

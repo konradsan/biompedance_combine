@@ -8,13 +8,19 @@ import java.io.*;
 
 public class BioimpedanceStage extends Stage {
 
-    private static final String SERVICE_NAME = "BioImpedanceService";
+    private static final String BIOIMPEDANCE_SERVICE_NAME = "BioService";
+    private static final String OXI_SERVICE_NAME = "OxiService";
 
     public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path) throws IOException {
 
-        execService("stop");
+        execService("stop", OXI_SERVICE_NAME);
 
-        execService("start");
+        execService("start", OXI_SERVICE_NAME);
+
+        execService("stop",BIOIMPEDANCE_SERVICE_NAME);
+
+        execService("start", BIOIMPEDANCE_SERVICE_NAME);
+
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/kit/bioimpedance/fxml/bioimpedance.fxml"));
         Parent root = loader.load();
@@ -35,13 +41,15 @@ public class BioimpedanceStage extends Stage {
 
     }
 
-    private void execService(String command){
+    private void execService(String command, String serviceName){
 
         try {
             Process p = null;
-            p = Runtime.getRuntime().exec("net " + command +" " + SERVICE_NAME);
+            p = Runtime.getRuntime().exec("net " + command +" " + serviceName);
 
             p.waitFor();
+
+            System.out.println(serviceName + ":" + command);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line = reader.readLine();

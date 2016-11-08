@@ -95,13 +95,13 @@ public class EquipmentServiceMock implements EquipmentService {
         return equipmentReady;
     }
 
-    //библиотека подключена, пластины работают
+    //Р±РёР±Р»РёРѕС‚РµРєР° РїРѕРґРєР»СЋС‡РµРЅР°, РїР»Р°СЃС‚РёРЅС‹ СЂР°Р±РѕС‚Р°СЋС‚
     public void setEquipmentReady(boolean equipmentReady) {
         this.equipmentReady = equipmentReady;
     }
 
 
-    //Мишин эквипмент-мок-сервис
+    //РњРёС€РёРЅ СЌРєРІРёРїРјРµРЅС‚-РјРѕРє-СЃРµСЂРІРёСЃ
     /*private final List<Boolean> handsReady = new ArrayList<>();
     private final List<Boolean> legsReady = new ArrayList<>();
     private List<PulseOximeterValue> waves = new ArrayList<>();

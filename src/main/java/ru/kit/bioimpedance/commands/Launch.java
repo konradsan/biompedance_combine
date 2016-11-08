@@ -33,7 +33,6 @@ public class Launch extends Command{
         this.systBP = systBP;
         this.diastBP = diastBP;
         this.seconds = seconds;
-        //TODO: Передать активность
     }
 
     public int getAge() {

@@ -11,7 +11,7 @@ public interface EquipmentService {
 
     BioimpedanceValue getBioimpedanceValue();
 
-    //методы, добавленные к Мишиным
+    //РјРµС‚РѕРґС‹, РґРѕР±Р°РІР»РµРЅРЅС‹Рµ Рє РњРёС€РёРЅС‹Рј
     public void setBioimpedanceValue(BioimpedanceValue bioimpedanceValue);
 
     public void setHandsReady(boolean handsReady);

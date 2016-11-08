@@ -140,7 +140,7 @@ public class BioimpedanceController {
     Thread checkReadyThread;
     private static final int NUMBER_OF_SKIP = 5;
     private BioimpedanceStage stage;
-    private Map<String, Inspection> summorizedLastResearch = new HashMap<>();
+    private volatile Map<String, Inspection> summorizedLastResearch = new HashMap<>();
     private boolean haveBioLastResearch = false;
     private boolean haveHypoLastResearch = false;
 
@@ -443,6 +443,7 @@ public class BioimpedanceController {
 
     void disableAll() {
         startButton.setDisable(true);
+        measurePressureButton.setDisable(true);
 //        okButton.setDisable(true);
     }
 
@@ -478,7 +479,7 @@ public class BioimpedanceController {
         secondsForTest = MAX_TIME;
         haveBioLastResearch = false;
         haveHypoLastResearch = false;
-        summorizedLastResearch = new HashMap<>();
+        //summorizedLastResearch = new HashMap<>();
         checkReadyThread.interrupt();
         pieChart.getData().clear();
         disableAll();
@@ -579,8 +580,6 @@ public class BioimpedanceController {
                     startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
-                    System.out.println(pulseoximeterValue.getHeartRate() + "  HEAART");
-                    System.out.println(pulseoximeterValue.getSpo2());
 
                 }
             }
@@ -708,7 +707,16 @@ public class BioimpedanceController {
     private void startTest(ActionEvent actionEvent) {
 
         beforeTest();
-        //Tonometr test
+
+        //Занесение давления в репорт
+        Inspection distBP = new Inspection();
+        Inspection systBP = new Inspection();
+        distBP.setName("distbp");
+        distBP.setValue(diastolicPressureProperty.getValue());
+        systBP.setName("systbp");
+        systBP.setValue(systolicPressureProperty.getValue());
+        summorizedLastResearch.put("distBP",distBP);
+        summorizedLastResearch.put("systBP",systBP);
         //TODO
 
         //Bioimpedance test & show results
@@ -801,6 +809,7 @@ public class BioimpedanceController {
                         System.err.println(data);
                         System.err.println("Hypoxia LastrReaserch is ready");
                         summorizedLastResearch.putAll(((LastResearch) data).getInspections());
+                        System.out.println(summorizedLastResearch.keySet());
                         haveHypoLastResearch = true;
                         return;
                     }
@@ -851,6 +860,7 @@ public class BioimpedanceController {
                         System.err.println("Bioimpedance LastResearch is ready");
                         System.err.println(lastResearch);
                         summorizedLastResearch.putAll(lastResearch.getInspections());
+                        System.out.println(summorizedLastResearch.keySet());
                         haveBioLastResearch = true;
                         break;
                     }
@@ -958,7 +968,7 @@ public class BioimpedanceController {
                 try (Socket socket = new Socket("localhost", 8084)) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
+                    //TODO
                     sendCommand(new Launch(getAge(), isMan(), getWeight(), getHeight(), getActivityLevel(), 0, 0, 0), output);
                     sendCommand(new CheckStatus(), output);
 
@@ -1002,7 +1012,6 @@ public class BioimpedanceController {
                         } else {
                             break;
                         }
-
 
                         try {
                             Thread.sleep(500);
@@ -1056,9 +1065,20 @@ public class BioimpedanceController {
 
             JSONObject innerJSONObject = new JSONObject();
             Inspection inspection = inspections.get(name.toString());
+
             innerJSONObject.put("power", inspection.getValue());
             innerJSONObject.put("min", inspection.getMin());
             innerJSONObject.put("max", inspection.getMax());
+
+            //TODO Переделать заглушку
+            if(inspection.getName().equalsIgnoreCase("RI")){
+                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
+            }else if(inspection.getName().equalsIgnoreCase("svr")){
+                innerJSONObject.put("power", 900 + (int)(Math.random() * 600));
+                innerJSONObject.put("min", 900.0);
+            }else if(inspection.getName().equalsIgnoreCase("sv")){
+                innerJSONObject.put("power", 60 + (int)(Math.random() * 40));
+            }
 
             jsonObject.put(name.toString().toLowerCase(), innerJSONObject);
         }
@@ -1068,7 +1088,7 @@ public class BioimpedanceController {
 
     private void writeJSON(Map<String, Inspection> inspections) {
         try {
-            String jsonFileName = path.concat("bioImp_output_file.json");
+            String jsonFileName = path.concat("base_output_file.json");
             BufferedWriter e = new BufferedWriter(new FileWriter(new File(jsonFileName)));
             Throwable var2 = null;
 
@@ -1098,7 +1118,7 @@ public class BioimpedanceController {
 
 //обозначения показателей, записываемых в результирующий JSON
 enum InspectionNames {
-    FAT, TBW, ECW, ICW, MM, STRESS, LF, HF, BIOAGE
+    FAT, TBW, ECW, ICW, MM, STRESS, LF, HF, BIOAGE, systBP, distBP, HR, SVR, SV, RI, SI, SPO2
 }
 
 class PressureConverter extends StringConverter<Number> {

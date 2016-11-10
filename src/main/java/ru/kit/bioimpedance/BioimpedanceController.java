@@ -180,7 +180,9 @@ public class BioimpedanceController {
     @FXML
     private Button okButton;
     @FXML
-    private AnchorPane endScreen;
+    private AnchorPane okEndScreen;
+    @FXML
+    private AnchorPane badEndScreen;
 
 
     @FXML
@@ -491,11 +493,15 @@ public class BioimpedanceController {
     //установка заглушки для графика пульсовой волны
     //переход в режим проверки оборудования
     void afterTest() {
+        if(secondsForTest!=0){
+            badEndScreen.setVisible(true);
+        }else {
+            okEndScreen.setVisible(true);
+        }
         isTesting = false;
-        equipmentService.setMockWavesValues();
+        //equipmentService.setMockWavesValues();
         startChecking();
         secondsForTest = MAX_TIME;
-        endScreen.setVisible(true);
 
         System.err.println("After test");
     }
@@ -577,7 +583,8 @@ public class BioimpedanceController {
                                     pulseoximeterValue.getSpo2().toString() : "--");*/
 
                 if (!isTesting) {
-                    startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
+                    startButton.setDisable(!(!heartRateLabel.getText().equals("0") && !spo2Label.getText().equals("0")
+                            && pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
 
@@ -752,13 +759,13 @@ public class BioimpedanceController {
                     //для отображения "---" в полях сенсоров рук/ног
                     //equipmentService.setEquipmentReady(false);
 
-                    BioimpedanceController.this.testHypoxiaProgressBarTimer();
-                    try {
+                    testHypoxiaProgressBarTimer();
+                    /*try {
                         Thread.sleep(2000); //Ждем пока progressBar дойдет до конца, drycode...
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException e) { // для формулы 7302/123 * seconds
                         e.printStackTrace();
-                    }
-                    BioimpedanceController.this.afterTest();
+                    }*/
+                    afterTest();
                 }).start();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
@@ -1070,15 +1077,14 @@ public class BioimpedanceController {
             innerJSONObject.put("min", inspection.getMin());
             innerJSONObject.put("max", inspection.getMax());
 
-            //TODO Переделать заглушку
-            if(inspection.getName().equalsIgnoreCase("RI")){
-                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
-            }else if(inspection.getName().equalsIgnoreCase("svr")){
-                innerJSONObject.put("power", 900 + (int)(Math.random() * 600));
-                innerJSONObject.put("min", 900.0);
-            }else if(inspection.getName().equalsIgnoreCase("sv")){
-                innerJSONObject.put("power", 60 + (int)(Math.random() * 40));
-            }
+//            if(inspection.getName().equalsIgnoreCase("RI")){
+//                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
+//            }else if(inspection.getName().equalsIgnoreCase("svr")){
+//                innerJSONObject.put("power", 900 + (int)(Math.random() * 600));
+//                innerJSONObject.put("min", 900.0);
+//            }else if(inspection.getName().equalsIgnoreCase("sv")){
+//                innerJSONObject.put("power", 60 + (int)(Math.random() * 40));
+//            }
 
             jsonObject.put(name.toString().toLowerCase(), innerJSONObject);
         }

@@ -1,10 +1,14 @@
 package ru.kit.bioimpedance;
 
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+
 import java.io.*;
+import java.util.concurrent.TimeUnit;
 
 public class BioimpedanceStage extends Stage {
 
@@ -13,13 +17,14 @@ public class BioimpedanceStage extends Stage {
 
     public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, String comPort) throws IOException {
 
-        execService("stop", OXI_SERVICE_NAME);
+        //No need to restart services
+        /*execService("stop", OXI_SERVICE_NAME);
 
         execService("start", OXI_SERVICE_NAME);
 
         execService("stop",BIOIMPEDANCE_SERVICE_NAME);
 
-        execService("start", BIOIMPEDANCE_SERVICE_NAME);
+        execService("start", BIOIMPEDANCE_SERVICE_NAME);*/
 
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/kit/bioimpedance/fxml/bioimpedance.fxml"));
@@ -37,6 +42,15 @@ public class BioimpedanceStage extends Stage {
         controller.setPath(path);
         controller.setComPort(comPort);
         controller.setStage(this);
+
+        this.setOnCloseRequest(event -> {
+            try {
+                controller.closeConnections();
+            }finally {
+                this.close();
+            }
+
+        });
 
         this.setScene(new Scene(root));
 

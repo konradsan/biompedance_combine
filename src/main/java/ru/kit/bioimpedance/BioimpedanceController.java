@@ -18,7 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.*;
 import org.json.JSONObject;
-import pwc.BasicHeartRateMonitor;
 import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
@@ -29,6 +28,9 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import static ru.kit.bioimpedance.CustomPointType.*;
@@ -149,6 +151,10 @@ public class BioimpedanceController {
     private boolean haveBioLastResearch = false;
     private boolean haveHypoLastResearch = false;
     private String comPort;
+    volatile boolean isStageClosed = false;
+    volatile Socket hypoxiaSocket = null;
+    volatile Socket bioSocket = null;
+
 
     @FXML
     private Canvas heartRhythm;
@@ -206,7 +212,10 @@ public class BioimpedanceController {
     }
 
     @FXML
-    private void cancel () {stage.close();}
+    private void cancel () {
+        closeConnections();
+        stage.close();
+    }
 
     @FXML
     private void ok() {
@@ -215,13 +224,29 @@ public class BioimpedanceController {
         stage.close();
     }
 
+    void closeConnections(){
+        isStageClosed = true;
+        closeSocketConnection(hypoxiaSocket);
+        closeSocketConnection(bioSocket);
+    }
+
+    private void closeSocketConnection(Socket socket){
+        try {
+            socket.shutdownInput();
+            socket.shutdownOutput();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public void setStage (BioimpedanceStage stage) {
         this.stage = stage;
     }
 
     //начать режим проверки оборудования - графики и поля приложени заполняются значениями
     private void startChecking(){
-
         checkReadyThread = new CheckReadyThread(this, portHypoxia, portBioimpedance);
         checkReadyThread.setDaemon(true);
         checkReadyThread.start();
@@ -246,10 +271,9 @@ public class BioimpedanceController {
         public void run () {
 
             boolean isServicesConnected = false;
-            Socket hypoxiaSocket = null;
-            Socket bioSocket = null;
+
             //Ожидание запуска сервисов пульсоксиметра и биомпиданса
-            while (!isServicesConnected) {
+            while (!isServicesConnected && !isStageClosed) {
                 try {
                     hypoxiaSocket = new Socket("localhost", this.hypoxiaPort);
                     bioSocket = new Socket("localhost", this.bioPort);
@@ -344,7 +368,7 @@ public class BioimpedanceController {
                         System.err.println("Interrupt checking ready");
                     }
 
-                } while (!isTesting && !isInterrupted());
+                } while (!isTesting && !isInterrupted() && !isStageClosed);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }finally {
@@ -506,7 +530,7 @@ public class BioimpedanceController {
         }
         isTesting = false;
         //equipmentService.setMockWavesValues();
-        startChecking();
+        //startChecking();
         secondsForTest = MAX_TIME;
 
         System.err.println("After test");
@@ -761,7 +785,7 @@ public class BioimpedanceController {
                     pieChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
                     pieChart.getData().add(new PieChart.Data(String.format("Вода \n%.2f%%", tbw), tbw));
                 }
-                new Thread(() -> {
+                Thread oxiWrapperThread = new Thread(() -> {
                     //для отображения "---" в полях сенсоров рук/ног
                     //equipmentService.setEquipmentReady(false);
 
@@ -772,7 +796,9 @@ public class BioimpedanceController {
                         e.printStackTrace();
                     }*/
                     afterTest();
-                }).start();
+                });
+                oxiWrapperThread.setDaemon(true);
+                oxiWrapperThread.start();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -827,7 +853,7 @@ public class BioimpedanceController {
                         return;
                     }
 
-                } while(true) ;
+                } while(isTesting && !isStageClosed) ;
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -878,7 +904,7 @@ public class BioimpedanceController {
                         break;
                     }
 
-                } while (isTesting);
+                } while (isTesting && !isStageClosed);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -906,7 +932,7 @@ public class BioimpedanceController {
 
         equipmentService.clearWavesValue();
         StartTestHypoxia startTestHypoxia = new StartTestHypoxia(this, portHypoxia);
-        startTestHypoxia.setDaemon(false);
+        startTestHypoxia.setDaemon(true);
         startTestHypoxia.start();
 
         try {
@@ -968,8 +994,8 @@ public class BioimpedanceController {
     }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        //measureNewTonometr();
-        measureOldTonometr(comPort);
+        measureNewTonometr();
+        //measureOldTonometr(comPort);
     }
 
 

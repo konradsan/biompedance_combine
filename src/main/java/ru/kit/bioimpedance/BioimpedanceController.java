@@ -1110,6 +1110,15 @@ public class BioimpedanceController {
 
         Thread thread = new Thread(() -> {
 
+            try {
+                String[] cmd = {"./usb_switch.exe"};
+                Process p = Runtime.getRuntime().exec(cmd);
+                p.waitFor();
+                Thread.sleep(5000);
+            } catch (Exception ex) {
+                System.out.println("ERROR SWITCH EXE");
+            }
+
 
 //            ReadDataTon rd = new ReadDataTon(comPort);
             TonometrReader rd = new TonometrReader(comPort);

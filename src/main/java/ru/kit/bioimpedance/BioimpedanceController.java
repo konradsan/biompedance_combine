@@ -18,7 +18,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.*;
 import org.json.JSONObject;
-import pwc.BasicHeartRateMonitor;
 import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
@@ -29,6 +28,9 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import static ru.kit.bioimpedance.CustomPointType.*;
@@ -122,6 +124,7 @@ public class BioimpedanceController {
         this.comPort = comPort;
     }
 
+
     private int count = 0;
     private int secondsForTest = 140;
     private final List<CustomPoint> heartRatePoints = new ArrayList<>();
@@ -149,6 +152,11 @@ public class BioimpedanceController {
     private boolean haveBioLastResearch = false;
     private boolean haveHypoLastResearch = false;
     private String comPort;
+    volatile boolean isStageClosed = false;
+    volatile Socket hypoxiaSocket = null;
+    volatile Socket bioSocket = null;
+    Timeline timeline, timer;
+    volatile static int COUNTER_MMM = 0;
 
     @FXML
     private Canvas heartRhythm;
@@ -186,7 +194,9 @@ public class BioimpedanceController {
     @FXML
     private Button okButton;
     @FXML
-    private AnchorPane endScreen;
+    private AnchorPane okEndScreen;
+    @FXML
+    private AnchorPane badEndScreen;
 
 
     @FXML
@@ -204,7 +214,10 @@ public class BioimpedanceController {
     }
 
     @FXML
-    private void cancel () {stage.close();}
+    private void cancel () {
+        closeConnections();
+        stage.close();
+    }
 
     @FXML
     private void ok() {
@@ -213,13 +226,34 @@ public class BioimpedanceController {
         stage.close();
     }
 
+    void closeConnections(){
+        isStageClosed = true;
+        timeline.stop();
+        timer.stop();
+        closeSocketConnection(bioSocket);
+        closeSocketConnection(hypoxiaSocket);
+
+    }
+
+    private void closeSocketConnection(Socket socket){
+        try {
+            if(!socket.isClosed()){
+                socket.shutdownInput();
+                socket.shutdownOutput();
+            }
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public void setStage (BioimpedanceStage stage) {
         this.stage = stage;
     }
 
     //начать режим проверки оборудования - графики и поля приложени заполняются значениями
     private void startChecking(){
-
         checkReadyThread = new CheckReadyThread(this, portHypoxia, portBioimpedance);
         checkReadyThread.setDaemon(true);
         checkReadyThread.start();
@@ -244,10 +278,9 @@ public class BioimpedanceController {
         public void run () {
 
             boolean isServicesConnected = false;
-            Socket hypoxiaSocket = null;
-            Socket bioSocket = null;
+
             //Ожидание запуска сервисов пульсоксиметра и биомпиданса
-            while (!isServicesConnected) {
+            while (!isServicesConnected && !isStageClosed) {
                 try {
                     hypoxiaSocket = new Socket("localhost", this.hypoxiaPort);
                     bioSocket = new Socket("localhost", this.bioPort);
@@ -342,7 +375,7 @@ public class BioimpedanceController {
                         System.err.println("Interrupt checking ready");
                     }
 
-                } while (!isTesting && !isInterrupted());
+                } while (!isTesting && !isInterrupted() && !isStageClosed);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }finally {
@@ -367,7 +400,7 @@ public class BioimpedanceController {
         }
     }
 
-    private void addPulse() {
+    private void addPulse(int id) {
         if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
                 equipmentService.getLastPulseoximeterValue().getSpo2() == 0 &&
                 equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
@@ -497,11 +530,15 @@ public class BioimpedanceController {
     //установка заглушки для графика пульсовой волны
     //переход в режим проверки оборудования
     void afterTest() {
+        if(secondsForTest!=0){
+            badEndScreen.setVisible(true);
+        }else {
+            okEndScreen.setVisible(true);
+        }
         isTesting = false;
-        equipmentService.setMockWavesValues();
-        startChecking();
+        //equipmentService.setMockWavesValues();
+        //startChecking();
         secondsForTest = MAX_TIME;
-        endScreen.setVisible(true);
 
         System.err.println("After test");
     }
@@ -536,7 +573,7 @@ public class BioimpedanceController {
         }
 
         //отрисовка графика сердечного ритма, пульсовой волны
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
+        timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
             drawHeartRhythm();
             drawPulseWave();
             count = (int) ((count + 1) % heartRhythm.getWidth());
@@ -583,7 +620,8 @@ public class BioimpedanceController {
                                     pulseoximeterValue.getSpo2().toString() : "--");*/
 
                 if (!isTesting) {
-                    startButton.setDisable(!(pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
+                    startButton.setDisable(!(!heartRateLabel.getText().equals("0") && !spo2Label.getText().equals("0")
+                            && pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
 
@@ -654,7 +692,7 @@ public class BioimpedanceController {
     private void drawHeartRhythm() {
         if (!pulseIsRun) {
             if (equipmentService.getLastPulseoximeterValue() != null) {
-                addPulse();
+                addPulse(1);
                 pulseIsRun = true;
             }
         }
@@ -672,6 +710,7 @@ public class BioimpedanceController {
                 CustomPoint point = heartRatePoints.get(i);
                 if (point.getX() <= count) {
                     if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
+
                         gc.lineTo(point.getX(), centerY);
                     /*if (heartRatePoints.get(i + 2).getX() <= count) {
                         gc.bezierCurveTo(point.getX(), centerY + point.getType().getDeltaY(),
@@ -697,7 +736,7 @@ public class BioimpedanceController {
             CustomPoint point = heartRatePoints.get(heartRatePoints.size() - 1);
             if (point.getType().equals(FINISH)) {
                 if (point.getX() <= count) {
-                    addPulse();
+                    addPulse(2);
                 }
             }
         }
@@ -754,18 +793,20 @@ public class BioimpedanceController {
                     pieChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
                     pieChart.getData().add(new PieChart.Data(String.format("Вода \n%.2f%%", tbw), tbw));
                 }
-                new Thread(() -> {
+                Thread oxiWrapperThread = new Thread(() -> {
                     //для отображения "---" в полях сенсоров рук/ног
                     //equipmentService.setEquipmentReady(false);
 
-                    BioimpedanceController.this.testHypoxiaProgressBarTimer();
-                    try {
+                    testHypoxiaProgressBarTimer();
+                    /*try {
                         Thread.sleep(2000); //Ждем пока progressBar дойдет до конца, drycode...
-                    } catch (InterruptedException e) {
+                    } catch (InterruptedException e) { // для формулы 7302/123 * seconds
                         e.printStackTrace();
-                    }
-                    BioimpedanceController.this.afterTest();
-                }).start();
+                    }*/
+                    afterTest();
+                });
+                oxiWrapperThread.setDaemon(true);
+                oxiWrapperThread.start();
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
@@ -820,7 +861,7 @@ public class BioimpedanceController {
                         return;
                     }
 
-                } while(true) ;
+                } while(isTesting && !isStageClosed) ;
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -871,7 +912,7 @@ public class BioimpedanceController {
                         break;
                     }
 
-                } while (isTesting);
+                } while (isTesting && !isStageClosed);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -888,7 +929,7 @@ public class BioimpedanceController {
         progressBar.setProgress(0);
         timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
 
-        Timeline timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             secondsForTest--;
             timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
             double value = ((double) (MAX_TIME - secondsForTest)) / MAX_TIME;
@@ -899,7 +940,7 @@ public class BioimpedanceController {
 
         equipmentService.clearWavesValue();
         StartTestHypoxia startTestHypoxia = new StartTestHypoxia(this, portHypoxia);
-        startTestHypoxia.setDaemon(false);
+        startTestHypoxia.setDaemon(true);
         startTestHypoxia.start();
 
         try {
@@ -1145,15 +1186,14 @@ public class BioimpedanceController {
             innerJSONObject.put("min", inspection.getMin());
             innerJSONObject.put("max", inspection.getMax());
 
-            //TODO Переделать заглушку
-            if(inspection.getName().equalsIgnoreCase("RI")){
-                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
-            }else if(inspection.getName().equalsIgnoreCase("svr")){
-                innerJSONObject.put("power", 900 + (int)(Math.random() * 600));
-                innerJSONObject.put("min", 900.0);
-            }else if(inspection.getName().equalsIgnoreCase("sv")){
-                innerJSONObject.put("power", 60 + (int)(Math.random() * 40));
-            }
+//            if(inspection.getName().equalsIgnoreCase("RI")){
+//                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
+//            }else if(inspection.getName().equalsIgnoreCase("svr")){
+//                innerJSONObject.put("power", 900 + (int)(Math.random() * 600));
+//                innerJSONObject.put("min", 900.0);
+//            }else if(inspection.getName().equalsIgnoreCase("sv")){
+//                innerJSONObject.put("power", 60 + (int)(Math.random() * 40));
+//            }
 
             jsonObject.put(name.toString().toLowerCase(), innerJSONObject);
         }

@@ -12,6 +12,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
@@ -313,9 +314,9 @@
             </GridPane>
           </children>
       </GridPane>
-      <AnchorPane fx:id="endScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
+      <AnchorPane fx:id="okEndScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
          <children>
-            <AnchorPane opacity="0.6" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: white;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <AnchorPane opacity="0.6" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: E5FFCC;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
             <VBox alignment="CENTER" layoutX="517.0" layoutY="256.8359375" prefHeight="727.0" prefWidth="1302.0" spacing="120.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <children>
                   <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Тест завершен">
@@ -323,11 +324,34 @@
                         <Font size="40.0" />
                      </font>
                   </Text>
-                  <Button fx:id="endButton" alignment="CENTER" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" text="Вернуться в меню" textAlignment="CENTER">
+                  <Button alignment="CENTER" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" styleClass="endButton" text="Вернуться в меню" textAlignment="CENTER">
                      <font>
                         <Font size="20.0" />
                      </font>
                   </Button>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="badEndScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
+         <children>
+            <AnchorPane opacity="0.6" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: FFCC99;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <VBox alignment="CENTER" layoutX="517.0" layoutY="256.8359375" prefHeight="727.0" prefWidth="1302.0" spacing="120.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Тест не завершен">
+                     <font>
+                        <Font size="40.0" />
+                     </font>
+                  </Text>
+                  <HBox alignment="CENTER" spacing="40.0">
+                     <children>
+                        <Button alignment="CENTER" mnemonicParsing="false" onAction="#cancel" prefHeight="65.0" prefWidth="245.0" styleClass="exitButton" text="Закрыть" textAlignment="CENTER">
+                           <font>
+                              <Font size="20.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
                </children>
             </VBox>
          </children>

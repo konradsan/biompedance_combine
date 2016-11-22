@@ -1,20 +1,41 @@
 package ru.kit.bioimpedance;
 
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+
+import java.io.IOException;
 
 public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
+        primaryStage.setTitle("Hello World!");
+        Button btn = new Button();
+        btn.setText("Базовый тест");
+        btn.setOnAction(new EventHandler<ActionEvent>() {
 
-        Parent root = new Pane();
-        primaryStage.setTitle("Hello World");
-        primaryStage.setScene(new Scene(root));
-        Stage stage = new BioimpedanceStage(45, true, 80, 170, 2, 120, 80, "");
+            @Override
+            public void handle(ActionEvent event) {
+                Stage s = null;
+                try {
+                    s = new BioimpedanceStage(45, true, 80, 170, 2, 120, 80, "","3");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-        stage.show();
+                s.show();
+            }
+        });
+
+        StackPane root = new StackPane();
+        root.getChildren().add(btn);
+        primaryStage.setScene(new Scene(root, 300, 250));
+        primaryStage.show();
     }
 
     public static void main(String[] args) {

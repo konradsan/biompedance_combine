@@ -124,6 +124,7 @@ public class BioimpedanceController {
         this.comPort = comPort;
     }
 
+
     private int count = 0;
     private int secondsForTest = 140;
     private final List<CustomPoint> heartRatePoints = new ArrayList<>();

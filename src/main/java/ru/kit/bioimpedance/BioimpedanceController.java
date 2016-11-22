@@ -154,7 +154,8 @@ public class BioimpedanceController {
     volatile boolean isStageClosed = false;
     volatile Socket hypoxiaSocket = null;
     volatile Socket bioSocket = null;
-
+    Timeline timeline, timer;
+    volatile static int COUNTER_MMM = 0;
 
     @FXML
     private Canvas heartRhythm;
@@ -226,14 +227,19 @@ public class BioimpedanceController {
 
     void closeConnections(){
         isStageClosed = true;
-        closeSocketConnection(hypoxiaSocket);
+        timeline.stop();
+        timer.stop();
         closeSocketConnection(bioSocket);
+        closeSocketConnection(hypoxiaSocket);
+
     }
 
     private void closeSocketConnection(Socket socket){
         try {
-            socket.shutdownInput();
-            socket.shutdownOutput();
+            if(!socket.isClosed()){
+                socket.shutdownInput();
+                socket.shutdownOutput();
+            }
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -393,7 +399,7 @@ public class BioimpedanceController {
         }
     }
 
-    private void addPulse() {
+    private void addPulse(int id) {
         if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
                 equipmentService.getLastPulseoximeterValue().getSpo2() == 0 &&
                 equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
@@ -566,7 +572,7 @@ public class BioimpedanceController {
         }
 
         //отрисовка графика сердечного ритма, пульсовой волны
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
+        timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
             drawHeartRhythm();
             drawPulseWave();
             count = (int) ((count + 1) % heartRhythm.getWidth());
@@ -685,7 +691,7 @@ public class BioimpedanceController {
     private void drawHeartRhythm() {
         if (!pulseIsRun) {
             if (equipmentService.getLastPulseoximeterValue() != null) {
-                addPulse();
+                addPulse(1);
                 pulseIsRun = true;
             }
         }
@@ -703,6 +709,7 @@ public class BioimpedanceController {
                 CustomPoint point = heartRatePoints.get(i);
                 if (point.getX() <= count) {
                     if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
+
                         gc.lineTo(point.getX(), centerY);
                     /*if (heartRatePoints.get(i + 2).getX() <= count) {
                         gc.bezierCurveTo(point.getX(), centerY + point.getType().getDeltaY(),
@@ -728,7 +735,7 @@ public class BioimpedanceController {
             CustomPoint point = heartRatePoints.get(heartRatePoints.size() - 1);
             if (point.getType().equals(FINISH)) {
                 if (point.getX() <= count) {
-                    addPulse();
+                    addPulse(2);
                 }
             }
         }
@@ -921,7 +928,7 @@ public class BioimpedanceController {
         progressBar.setProgress(0);
         timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
 
-        Timeline timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
+        timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             secondsForTest--;
             timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
             double value = ((double) (MAX_TIME - secondsForTest)) / MAX_TIME;
@@ -994,8 +1001,8 @@ public class BioimpedanceController {
     }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        measureNewTonometr();
-        //measureOldTonometr(comPort);
+        //measureNewTonometr();
+        measureOldTonometr(comPort);
     }
 
 

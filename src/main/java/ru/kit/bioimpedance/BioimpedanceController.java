@@ -774,9 +774,11 @@ public class BioimpedanceController {
             protected BioimpedanceValue call() throws Exception {
                 //ожидание (3 сек) сбора LastRearch биоимпеданса
                 int i=1;
-                while (!equipmentService.isBioimpedanceReady()) {
-                    Thread.sleep(1500);
+                while (equipmentService.getBioimpedanceValue()==null) {
+                    if (equipmentService.isBioimpedanceReady()) break;
+                    Thread.sleep(1000);
                 }
+                if (equipmentService.getBioimpedanceValue()==null) afterTest();
                 return equipmentService.getBioimpedanceValue();
             }
         };
@@ -1002,8 +1004,8 @@ public class BioimpedanceController {
     }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        //measureNewTonometr();
-        measureOldTonometr(comPort);
+        measureNewTonometr();
+        //measureOldTonometr(comPort);
     }
 
 

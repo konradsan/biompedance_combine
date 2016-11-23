@@ -66,7 +66,7 @@ public class EquipmentServiceMock implements EquipmentService {
 
     @Override
     public boolean isBioimpedanceReady() {
-        if (biompedanceCheck++ > 3) {
+        if (biompedanceCheck++ > 8) {
             return true;
         }
         return false;

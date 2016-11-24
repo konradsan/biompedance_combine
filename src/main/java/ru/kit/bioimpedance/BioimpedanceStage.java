@@ -15,6 +15,10 @@ public class BioimpedanceStage extends Stage {
     private static final String BIOIMPEDANCE_SERVICE_NAME = "BioService";
     private static final String OXI_SERVICE_NAME = "OxiService";
 
+    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path) throws IOException {
+        this(age,isMale,width,height,activityLevel,systBP,diastBP,path,"");
+    }
+
     public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, String comPort) throws IOException {
 
         //No need to restart services

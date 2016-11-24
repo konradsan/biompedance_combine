@@ -1004,11 +1004,13 @@ public class BioimpedanceController {
     }
     @FXML
     private void measurePressure(ActionEvent actionEvent) {
-        measureNewTonometr();
-        //measureOldTonometr(comPort);
+        if(comPort.equals("")){
+            measureNewTonometr();
+        }else {
+            measureOldTonometr(comPort);
+        }
+
     }
-
-
 
     private void measureNewTonometr() {
         Task<TonometrData> longTask = new Task<TonometrData>() {

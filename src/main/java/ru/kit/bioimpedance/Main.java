@@ -23,7 +23,7 @@ public class Main extends Application {
             public void handle(ActionEvent event) {
                 Stage s = null;
                 try {
-                    s = new BioimpedanceStage(45, true, 80, 170, 2, 120, 80, "","3");
+                    s = new BioimpedanceStage(22, true, 82, 183, 0, 120, 80, "");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

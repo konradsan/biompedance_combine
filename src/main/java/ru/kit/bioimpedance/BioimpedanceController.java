@@ -26,6 +26,7 @@ import ru.kit.tonometr_comport.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -222,28 +223,31 @@ public class BioimpedanceController {
     @FXML
     private void ok() {
 
+        changeBioKgToPercent();
         writeJSON(summorizedLastResearch);
         stage.close();
     }
 
     void closeConnections(){
         isStageClosed = true;
-        timeline.stop();
-        timer.stop();
+        if (timeline!=null) timeline.stop();
+        if (timer!=null) timer.stop();
         closeSocketConnection(bioSocket);
         closeSocketConnection(hypoxiaSocket);
 
     }
 
     private void closeSocketConnection(Socket socket){
-        try {
-            if(!socket.isClosed()){
-                socket.shutdownInput();
-                socket.shutdownOutput();
+        if (socket!=null) {
+            try {
+                if(!socket.isClosed()){
+                    socket.shutdownInput();
+                    socket.shutdownOutput();
+                }
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -778,7 +782,10 @@ public class BioimpedanceController {
                     if (equipmentService.isBioimpedanceReady()) break;
                     Thread.sleep(1000);
                 }
-                if (equipmentService.getBioimpedanceValue()==null) afterTest();
+                if (equipmentService.getBioimpedanceValue()==null){
+                    this.cancel(true);
+                    afterTest();
+                }
                 return equipmentService.getBioimpedanceValue();
             }
         };
@@ -812,6 +819,9 @@ public class BioimpedanceController {
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
+        });
+        bioimpedance.setOnCancelled(event -> {
+
         });
 
         Thread bioimpedanceThread = new Thread(bioimpedance);
@@ -898,7 +908,10 @@ public class BioimpedanceController {
                         break;
                     }
                     Data data = deserializeData(line);
-
+                    if (data == null){
+                        equipmentService.setBioimpedanceValue(null);//Если данные с биомпиданса не пришли
+                        return;
+                    }
                     if (data instanceof LastResearch) {
                         LastResearch lastResearch = (LastResearch) data;
                         double fat = lastResearch.getInspections().get("FAT").getValue();
@@ -1241,6 +1254,27 @@ public class BioimpedanceController {
             var14.printStackTrace();
         }
 
+    }
+
+    private void changeBioKgToPercent(){
+        String[] inspectionsToChange = {"FAT","MM","TBW","ECW","ICW"};
+        double tbw = summorizedLastResearch.get("TBW").getValue();
+        for (String inspection:inspectionsToChange){
+            Inspection i = summorizedLastResearch.get(inspection);
+            if(inspection.equals("FAT") || inspection.equals("MM") || inspection.equals("TBW")) {
+                i.setValue(formatDouble(100 * i.getValue() / getWeight()));
+                i.setMin(formatDouble(100 * i.getMin() / getWeight()));
+                i.setMax(formatDouble(100 * i.getMax() / getWeight()));
+            }else if (inspection.equals("ECW") || inspection.equals("ICW")){
+                i.setValue(formatDouble(100 * i.getValue() / tbw));
+                i.setMin(formatDouble(100 * i.getMin() / tbw));
+                i.setMax(formatDouble(100 * i.getMax() / tbw));
+            }
+        }
+    }
+
+    private static double formatDouble(double value){
+        return Math.floor(value * 100) / 100;
     }
 }
 

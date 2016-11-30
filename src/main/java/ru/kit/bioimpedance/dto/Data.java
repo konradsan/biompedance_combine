@@ -16,4 +16,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = ReadyStatusTonometr.class, name="ReadyStatusTonometr"),
 })
 public abstract class Data {
+
 }

@@ -2,7 +2,9 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
@@ -230,6 +232,50 @@
                               <Font name="Calibri Bold" size="15.0" />
                            </font>
                         </Label>
+                        <HBox fx:id="bioLegend" alignment="CENTER_LEFT" layoutX="234.0" layoutY="9.0" prefHeight="43.0" prefWidth="409.0" spacing="5.0">
+                           <children>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Жировая масса">
+                                 <font>
+                                    <Font name="Calibri Bold" size="12.0" />
+                                 </font>
+                              </Text>
+                              <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../image/yellow_line.jpg" />
+                                 </image>
+                              </ImageView>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Мышечная масса">
+                                 <font>
+                                    <Font name="Calibri Bold" size="12.0" />
+                                 </font>
+                              </Text>
+                              <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../image/orange_line.jpg" />
+                                 </image>
+                              </ImageView>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Вода">
+                                 <font>
+                                    <Font name="Calibri Bold" size="12.0" />
+                                 </font>
+                              </Text>
+                              <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../image/blue.jpg" />
+                                 </image>
+                              </ImageView>
+                              <Text strokeType="OUTSIDE" strokeWidth="0.0" text="Общая масса">
+                                 <font>
+                                    <Font name="Calibri Bold" size="12.0" />
+                                 </font>
+                              </Text>
+                              <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../image/green.jpg" />
+                                 </image>
+                              </ImageView>
+                           </children>
+                        </HBox>
                      </children>
                      <GridPane.margin>
                         <Insets left="3.0" right="5.0" top="5.0" />
@@ -254,11 +300,21 @@
                               <Font name="Calibri Bold" size="15.0" />
                            </font>
                         </Label>
-                        <Label layoutX="83.0" layoutY="21.0" text="ЧСС [УдМ]">
+                        <ImageView fitHeight="23.0" fitWidth="26.0" layoutX="197.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../../../../projects/combines/hypoxia/src/main/resources/ru/kit/hypoxia/image/orange_line.jpg" />
+                           </image>
+                        </ImageView>
+                        <Label layoutX="123.0" layoutY="22.0" text="ЧСС [УдМ]">
                            <font>
                               <Font name="Calibri Bold" size="15.0" />
                            </font>
                         </Label>
+                        <ImageView fitHeight="23.0" fitWidth="26.0" layoutX="77.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../../../../projects/combines/hypoxia/src/main/resources/ru/kit/hypoxia/image/yellow_line.jpg" />
+                           </image>
+                        </ImageView>
                      </children>
                      <GridPane.margin>
                         <Insets left="3.0" right="5.0" top="5.0" />
@@ -274,11 +330,6 @@
                         <Insets left="5.0" right="3.0" />
                      </GridPane.margin>
                   </Canvas>
-                  <PieChart fx:id="pieChart" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" stylesheets="@../css/piechart.css" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                     <GridPane.margin>
-                        <Insets left="3.0" right="5.0" />
-                     </GridPane.margin>
-                  </PieChart>
                    <GridPane fx:id="forChart" GridPane.columnIndex="1" GridPane.rowIndex="3">
                        <columnConstraints>
                            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -287,6 +338,14 @@
                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                        </rowConstraints>
                    </GridPane>
+                  <BarChart fx:id="barChart" barGap="0.0" categoryGap="50.0" stylesheets="@../css/piechart.css" titleSide="LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <xAxis>
+                      <CategoryAxis side="BOTTOM" tickLabelFill="WHITE" fx:id="xAxis" />
+                    </xAxis>
+                    <yAxis>
+                      <NumberAxis fx:id="yAxis" side="LEFT" tickLabelFill="WHITE" />
+                    </yAxis>
+                  </BarChart>
                </children>
             </GridPane>
             <GridPane GridPane.rowIndex="2">
@@ -346,6 +405,34 @@
                   <HBox alignment="CENTER" spacing="40.0">
                      <children>
                         <Button alignment="CENTER" mnemonicParsing="false" onAction="#cancel" prefHeight="65.0" prefWidth="245.0" styleClass="exitButton" text="Закрыть" textAlignment="CENTER">
+                           <font>
+                              <Font size="20.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="warningScreen" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css">
+         <children>
+            <AnchorPane layoutX="509.0" opacity="0.81" prefHeight="200.0" prefWidth="793.0" style="-fx-background-color: #A86F20;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <VBox alignment="CENTER" layoutX="643.0" prefHeight="727.0" prefWidth="659.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Внимание!">
+                     <font>
+                        <Font size="32.0" />
+                     </font>
+                  </Text>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Поскольку процедура анализа массы тела связана с прохождением слабого тока через тело человека, то его не рекомендуют делать лицам с кардиостимуляторами и прочими вживлёнными электронными приборами, а также беременным женщинам." textAlignment="CENTER" wrappingWidth="891.80078125">
+                     <font>
+                        <Font size="20.0" />
+                     </font>
+                  </Text>
+                  <HBox alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="100.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#onContinueWarning" prefHeight="55.0" styleClass="endButton" text="Продолжить">
                            <font>
                               <Font size="20.0" />
                            </font>

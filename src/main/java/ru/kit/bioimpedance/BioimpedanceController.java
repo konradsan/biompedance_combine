@@ -5,6 +5,9 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +17,7 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.*;
@@ -26,12 +30,8 @@ import ru.kit.tonometr_comport.*;
 
 import java.io.*;
 import java.net.Socket;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import static ru.kit.bioimpedance.CustomPointType.*;
@@ -145,8 +145,10 @@ public class BioimpedanceController {
     private static final int MAX_DATA_VALUES = 150;
     private XYChart.Series<Number, Number> seriesHR;
     private XYChart.Series<Number, Number> seriesSPO2;
+    private XYChart.Series seriesBio;
+
     private boolean isTesting = false;
-    Thread checkReadyThread;
+    private Thread checkReadyThread;
     private static final int NUMBER_OF_SKIP = 5;
     private BioimpedanceStage stage;
     private volatile Map<String, Inspection> summorizedLastResearch = new HashMap<>();
@@ -156,8 +158,9 @@ public class BioimpedanceController {
     volatile boolean isStageClosed = false;
     volatile Socket hypoxiaSocket = null;
     volatile Socket bioSocket = null;
-    Timeline timeline, timer;
+    private Timeline timeline, timer;
     volatile static int COUNTER_MMM = 0;
+    private Task<TonometrData> measureNewTonometrTask;
 
     @FXML
     private Canvas heartRhythm;
@@ -166,7 +169,11 @@ public class BioimpedanceController {
     @FXML
     private GridPane innerGrid;
     @FXML
-    private PieChart pieChart;
+    private BarChart<Number,String> barChart;//new
+    @FXML
+    private CategoryAxis xAxis;
+    @FXML
+    private NumberAxis yAxis;
     @FXML
     private Label legsReadyLabel;
     @FXML
@@ -195,11 +202,17 @@ public class BioimpedanceController {
     @FXML
     private Button okButton;
     @FXML
-    private AnchorPane okEndScreen;
+    private AnchorPane okEndScreen,badEndScreen, warningScreen;
     @FXML
-    private AnchorPane badEndScreen;
+    private HBox bioLegend;
 
 
+
+
+    @FXML
+    private void onContinueWarning(){
+        warningScreen.setVisible(false);
+    }
     @FXML
     private void initialize() {
         initHeartRhythm();
@@ -207,7 +220,7 @@ public class BioimpedanceController {
         initTimeline();
         initHypoxiaChart();
 
-        pieChart.setLegendVisible(false);
+        barChart.setLegendVisible(false);
         systolicPressureLabel.textProperty().bindBidirectional(systolicPressureProperty, new PressureConverter());
         diastolicPressureLabel.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
 
@@ -232,6 +245,7 @@ public class BioimpedanceController {
         isStageClosed = true;
         if (timeline!=null) timeline.stop();
         if (timer!=null) timer.stop();
+        if (measureNewTonometrTask!=null) measureNewTonometrTask.cancel(true);
         closeSocketConnection(bioSocket);
         closeSocketConnection(hypoxiaSocket);
 
@@ -384,8 +398,8 @@ public class BioimpedanceController {
                 ex.printStackTrace();
             }finally {
                 try {
-                    hypoxiaSocket.close();
-                    bioSocket.close();
+                    if (hypoxiaSocket!=null) hypoxiaSocket.close();
+                    if (bioSocket!=null) bioSocket.close();
                 } catch (IOException e) {
                     System.err.println("Cannot close sockets connections!");
                 }
@@ -405,11 +419,9 @@ public class BioimpedanceController {
     }
 
     private void addPulse(int id) {
-        if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
-                equipmentService.getLastPulseoximeterValue().getSpo2() == 0 &&
-                equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
 
-        } else {
+        {
+            System.out.println("else  " +id);
             int distanceToNextPulse = distanceToNextPulse(equipmentService.getLastPulseoximeterValue().getHeartRate());
             heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 0, START));
             //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, P));
@@ -481,6 +493,8 @@ public class BioimpedanceController {
         chart.setHorizontalGridLinesVisible(true);
         chart.setLegendVisible(false);
 
+        bioLegend.setVisible(false);
+
         prepareChart();
     }
 
@@ -524,7 +538,7 @@ public class BioimpedanceController {
         haveHypoLastResearch = false;
         //summorizedLastResearch = new HashMap<>();
         checkReadyThread.interrupt();
-        pieChart.getData().clear();
+        barChart.getData().clear();
         disableAll();
 
         System.err.println("Before test");
@@ -628,7 +642,6 @@ public class BioimpedanceController {
                             && pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
                         && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
-
                 }
             }
 
@@ -794,13 +807,29 @@ public class BioimpedanceController {
                 BioimpedanceValue bioimpedanceValue = bioimpedance.get();
 
                 if (bioimpedance != null) {
-                    double fat = 100 * bioimpedanceValue.getFat() / this.getWeight();
-                    double mm = 100 * bioimpedanceValue.getMuscle() / this.getWeight();
-                    double tbw = 100 * bioimpedanceValue.getAllWater() / this.getWeight();
+                    xAxis.setAnimated(false);
+                    double fat = bioimpedanceValue.getFat();
+                    double mm = bioimpedanceValue.getMuscle();
+                    double tbw = bioimpedanceValue.getAllWater();
+                    final XYChart.Data<String,Number> dataFat = new XYChart.Data(Math.round(fat*10.0)/10.0+" кг",fat);
+                    final XYChart.Data<String,Number> dataMM = new XYChart.Data(Math.round(mm*10.0)/10.0+" кг ",mm);
+                    final XYChart.Data<String,Number> dataWater = new XYChart.Data(Math.round(tbw*10.0)/10.0+" кг  ",tbw);
+                    final XYChart.Data<String,Number> dataWeight = new XYChart.Data(getWeight()+" кг   ",getWeight());
 
-                    pieChart.getData().add(new PieChart.Data(String.format("Жировая масса \n%.2f%%", fat), fat));
-                    pieChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
-                    pieChart.getData().add(new PieChart.Data(String.format("Вода \n%.2f%%", tbw), tbw));
+                    seriesBio = new XYChart.Series();
+                    seriesBio.getData().addAll(dataFat,dataMM,dataWater,dataWeight);
+                    barChart.getData().addAll(seriesBio);
+
+                    bioLegend.setVisible(true);
+                    dataFat.getNode().setStyle("-fx-bar-fill:  #faa71b");
+                    dataMM.getNode().setStyle("-fx-bar-fill: #f3622d");
+                    dataWater.getNode().setStyle("-fx-bar-fill: #0087be");
+                    dataWeight.getNode().setStyle("-fx-bar-fill: #36804d");
+
+
+//                    barChart.getData().add(new PieChart.Data(String.format("Жировая масса \n%.2f%%", fat), fat));
+//                    barChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
+//                    barChart.getData().add(new PieChart.Data(String.format("Вода \n%.2f%%", tbw), tbw));
                 }
                 Thread oxiWrapperThread = new Thread(() -> {
                     //для отображения "---" в полях сенсоров рук/ног
@@ -1026,7 +1055,7 @@ public class BioimpedanceController {
     }
 
     private void measureNewTonometr() {
-        Task<TonometrData> longTask = new Task<TonometrData>() {
+        measureNewTonometrTask = new Task<TonometrData>() {
             @Override
             protected TonometrData call() throws Exception {
 
@@ -1050,6 +1079,10 @@ public class BioimpedanceController {
 
                     sendCommand(new StartTest(), output);
                     while (true) {
+                        if (this.isCancelled()){
+                            System.err.println("Measure new Tonometr Interrupted");
+                            return null;
+                        }
 
 
                         String line = br.readLine();
@@ -1095,8 +1128,8 @@ public class BioimpedanceController {
             }
         };
 
-        longTask.setOnSucceeded(event -> {
-            TonometrData data = longTask.getValue();
+        measureNewTonometrTask.setOnSucceeded(event -> {
+            TonometrData data = measureNewTonometrTask.getValue();
             if (data != null && data.systP > 0 && data.systP < 255 && data.diastP > 0 && data.diastP < 255) {
                 systolicPressureProperty.setValue(data.systP);
                 diastolicPressureProperty.setValue(data.diastP);
@@ -1111,7 +1144,7 @@ public class BioimpedanceController {
         });
 
         measurePressureButton.setDisable(true);
-        final Thread th = new Thread(longTask);
+        final Thread th = new Thread(measureNewTonometrTask);
         th.setDaemon(true);
         th.start();
     }

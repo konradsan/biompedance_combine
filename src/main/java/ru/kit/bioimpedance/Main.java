@@ -17,19 +17,14 @@ public class Main extends Application {
         primaryStage.setTitle("Hello World!");
         Button btn = new Button();
         btn.setText("Базовый тест");
-        btn.setOnAction(new EventHandler<ActionEvent>() {
-
-            @Override
-            public void handle(ActionEvent event) {
-                Stage s = null;
-                try {
-                    s = new BioimpedanceStage(22, true, 82, 183, 0, 120, 80, "");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                s.show();
+        btn.setOnAction(event -> {
+            Stage s = null;
+            try {
+                s = new BioimpedanceStage(22, true, 82, 183, 0, 120, 80, "");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            s.show();
         });
 
         StackPane root = new StackPane();

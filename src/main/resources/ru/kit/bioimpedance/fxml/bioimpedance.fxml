@@ -101,7 +101,7 @@
                               <Insets right="22.0" top="17.0" />
                           </GridPane.margin>
                       </Button>
-                  <GridPane GridPane.columnIndex="1">
+                  <GridPane prefHeight="75.0" prefWidth="323.0" GridPane.columnIndex="1">
                     <columnConstraints>
                       <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="100.0" prefWidth="100.0" />
                       <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="150.0" minWidth="155.0" prefWidth="150.0" />
@@ -119,7 +119,7 @@
                               <Insets left="5.0" right="5.0" />
                            </GridPane.margin>
                         </Label>
-                        <Label fx:id="diastolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1">
+                        <Label fx:id="diastolicPressureLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="37.0" prefWidth="163.0" style="-fx-background-color: #4b5962;" text="--" textFill="WHITE" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1">
                            <font>
                               <Font name="Calibri" size="32.0" />
                            </font>
@@ -127,18 +127,10 @@
                               <Insets left="5.0" right="5.0" />
                            </GridPane.margin>
                         </Label>
-                        <Hyperlink onAction="#inputSystolicPressure" text="Систолическое давление" />
-                        <Hyperlink onAction="#inputDiastolicPressure" text="Диастолическое давление" GridPane.columnIndex="1" />
+                        <Text fill="#0d96bf" strokeType="OUTSIDE" strokeWidth="0.0" text="Систолическое давление" underline="true" />
+                        <Text fill="#0d96bf" strokeType="OUTSIDE" strokeWidth="0.0" text="Диастолическое давление" underline="true" GridPane.columnIndex="1" />
                      </children>
                   </GridPane>
-                  <Button fx:id="measurePressureButton" mnemonicParsing="false" onAction="#measurePressure" text="Измерение давления" GridPane.columnIndex="2">
-                     <GridPane.margin>
-                        <Insets left="5.0" top="19.0" />
-                     </GridPane.margin>
-                     <font>
-                        <Font name="Calibri" size="21.0" />
-                     </font>
-                  </Button>
                   <GridPane GridPane.columnIndex="3">
                     <columnConstraints>
                       <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="100.0" prefWidth="100.0" />
@@ -302,7 +294,7 @@
                         </Label>
                         <ImageView fitHeight="23.0" fitWidth="26.0" layoutX="197.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../../../../../projects/combines/hypoxia/src/main/resources/ru/kit/hypoxia/image/orange_line.jpg" />
+                              <Image url="@../image/orange_line.jpg" />
                            </image>
                         </ImageView>
                         <Label layoutX="123.0" layoutY="22.0" text="ЧСС [УдМ]">
@@ -312,7 +304,7 @@
                         </Label>
                         <ImageView fitHeight="23.0" fitWidth="26.0" layoutX="77.0" layoutY="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../../../../../../../projects/combines/hypoxia/src/main/resources/ru/kit/hypoxia/image/yellow_line.jpg" />
+                              <Image url="@../image/yellow_line.jpg" />
                            </image>
                         </ImageView>
                      </children>
@@ -425,7 +417,7 @@
                         <Font size="32.0" />
                      </font>
                   </Text>
-                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Поскольку процедура анализа массы тела связана с прохождением слабого тока через тело человека, то его не рекомендуют делать лицам с кардиостимуляторами и прочими вживлёнными электронными приборами, а также беременным женщинам." textAlignment="CENTER" wrappingWidth="891.80078125">
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Поскольку процедура анализа массы тела связана с прохождением слабого тока через тело человека, то его не рекомендуют делать лицам с кардиостимуляторами и прочими вживлёнными электронными приборами." textAlignment="CENTER" wrappingWidth="891.80078125">
                      <font>
                         <Font size="20.0" />
                      </font>
@@ -439,6 +431,78 @@
                         </Button>
                      </children>
                   </HBox>
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <AnchorPane fx:id="measurePreassure" prefHeight="200.0" prefWidth="200.0" stylesheets="@../css/buttons.css" visible="false">
+         <children>
+            <AnchorPane opacity="0.81" prefHeight="727.0" prefWidth="1302.0" style="-fx-background-color: #A86F20;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+            <VBox alignment="CENTER" prefHeight="727.0" prefWidth="1302.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <GridPane alignment="CENTER" maxWidth="-Infinity" prefHeight="262.0" prefWidth="497.0" style="-fx-background-color: white;">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="SOMETIMES" />
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <Label fx:id="systolicPressureLabelPopUp" alignment="CENTER" prefHeight="37.0" prefWidth="119.0" style="-fx-background-color: #4b5962;" text="---" textFill="WHITE" GridPane.rowIndex="2">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="diastolicPressureLabelPopUp" alignment="CENTER" prefHeight="37.0" prefWidth="119.0" style="-fx-background-color: #4b5962;" text="---" textFill="WHITE" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                           <font>
+                              <Font name="Calibri" size="32.0" />
+                           </font>
+                        </Label>
+                        <Button fx:id="measurePressureButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#measurePressure" prefHeight="40.0" prefWidth="226.0" text="Измерение давления" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                           <font>
+                              <Font name="Calibri" size="19.0" />
+                           </font>
+                           <GridPane.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </GridPane.margin>
+                        </Button>
+                        <GridPane style="-fx-background-color: #52616B;" GridPane.columnSpan="2">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" />
+                              <ColumnConstraints hgrow="ALWAYS" maxWidth="800.0" minWidth="10.0" prefWidth="799.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints maxHeight="75.0" minHeight="75.0" prefHeight="75.0" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <ImageView fitHeight="26.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+                                 <image>
+                                    <Image url="@../image/arrow.png" />
+                                 </image>
+                              </ImageView>
+                              <Label text="Измерение давления" textFill="WHITE" GridPane.columnIndex="1">
+                                 <font>
+                                    <Font name="Calibri" size="24.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </GridPane>
+                        <Button fx:id="acceptPressureValuesButton" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onAcceptMeasurePressure" prefHeight="40.0" prefWidth="189.0" styleClass="endButton" text="Принять" GridPane.rowIndex="3">
+                           <GridPane.margin>
+                              <Insets left="20.0" right="20.0" />
+                           </GridPane.margin>
+                           <font>
+                              <Font size="19.0" />
+                           </font>
+                        </Button>
+                        <Hyperlink onAction="#inputSystolicPressure" text="Систолическое давление" GridPane.rowIndex="1" />
+                        <Hyperlink onAction="#inputDiastolicPressure" text="Диастолическое давление" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                     </children>
+                  </GridPane>
                </children>
             </VBox>
          </children>

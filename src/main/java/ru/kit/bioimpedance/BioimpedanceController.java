@@ -32,6 +32,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static ru.kit.bioimpedance.CustomPointType.*;
@@ -161,6 +162,8 @@ public class BioimpedanceController {
     private Timeline timeline, timer;
     volatile static int COUNTER_MMM = 0;
     private Task<TonometrData> measureNewTonometrTask;
+    private static int measureNewTonometrCount = 0;
+    private Task<Void> enterMeassure;
 
     @FXML
     private Canvas heartRhythm;
@@ -188,9 +191,9 @@ public class BioimpedanceController {
     private LineChartWithMarker<Number, Number> chart;
 
     @FXML
-    private Label systolicPressureLabel;
+    private Label systolicPressureLabel,systolicPressureLabelPopUp;
     @FXML
-    private Label diastolicPressureLabel;
+    private Label diastolicPressureLabel, diastolicPressureLabelPopUp;
     @FXML
     private Label timeLabel;
     @FXML
@@ -202,9 +205,11 @@ public class BioimpedanceController {
     @FXML
     private Button okButton;
     @FXML
-    private AnchorPane okEndScreen,badEndScreen, warningScreen;
+    private AnchorPane okEndScreen,badEndScreen, warningScreen, measurePreassure;
     @FXML
     private HBox bioLegend;
+    @FXML
+    private Button acceptPressureValuesButton;
 
 
 
@@ -212,6 +217,13 @@ public class BioimpedanceController {
     @FXML
     private void onContinueWarning(){
         warningScreen.setVisible(false);
+        measurePreassure.setVisible(true);
+    }
+    @FXML
+    private void onAcceptMeasurePressure(){
+        enterMeassure.cancel(true);
+        measurePreassure.setVisible(false);
+        startChecking();
     }
     @FXML
     private void initialize() {
@@ -222,9 +234,27 @@ public class BioimpedanceController {
 
         barChart.setLegendVisible(false);
         systolicPressureLabel.textProperty().bindBidirectional(systolicPressureProperty, new PressureConverter());
+        systolicPressureLabelPopUp.textProperty().bindBidirectional(systolicPressureProperty, new PressureConverter());
         diastolicPressureLabel.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
+        diastolicPressureLabelPopUp.textProperty().bindBidirectional(diastolicPressureProperty, new PressureConverter());
 
-        startChecking();
+        enterMeassure = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                while (!this.isCancelled()){
+                    Thread.sleep(1000);
+                    if(diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0){
+                        acceptPressureValuesButton.setDisable(false);
+                        break;
+                    }
+                }
+                return null;
+            }
+        };
+
+        Thread enterMeasureThread = new Thread(enterMeassure);
+        enterMeasureThread.start();
+
     }
 
     @FXML
@@ -238,6 +268,7 @@ public class BioimpedanceController {
 
         changeBioKgToPercent();
         writeJSON(summorizedLastResearch);
+        closeConnections();
         stage.close();
     }
 
@@ -246,6 +277,7 @@ public class BioimpedanceController {
         if (timeline!=null) timeline.stop();
         if (timer!=null) timer.stop();
         if (measureNewTonometrTask!=null) measureNewTonometrTask.cancel(true);
+        if (enterMeassure!=null) enterMeassure.cancel(true);
         closeSocketConnection(bioSocket);
         closeSocketConnection(hypoxiaSocket);
 
@@ -419,9 +451,11 @@ public class BioimpedanceController {
     }
 
     private void addPulse(int id) {
+        if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
+                equipmentService.getLastPulseoximeterValue().getSpo2() == 0 &&
+                equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
 
-        {
-            System.out.println("else  " +id);
+        } else {
             int distanceToNextPulse = distanceToNextPulse(equipmentService.getLastPulseoximeterValue().getHeartRate());
             heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 0, START));
             //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, P));
@@ -1133,12 +1167,20 @@ public class BioimpedanceController {
             if (data != null && data.systP > 0 && data.systP < 255 && data.diastP > 0 && data.diastP < 255) {
                 systolicPressureProperty.setValue(data.systP);
                 diastolicPressureProperty.setValue(data.diastP);
+                measureNewTonometrCount = 0;
             } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Измерение давления");
-                alert.setHeaderText("Не удалось измерить давление");
-                alert.setContentText("К сожалению, не удалось измерить давление. Пожалуйста, повторите попытку.");
-                alert.showAndWait();
+                if (measureNewTonometrCount<3) {
+                    measureNewTonometrCount++;
+                    System.err.println("Trying to re-measure pressure time="+measureNewTonometrCount);
+                    measureNewTonometr();
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Измерение давления");
+                    alert.setHeaderText("Не удалось измерить давление");
+                    alert.setContentText("К сожалению, не удалось измерить давление. Пожалуйста, повторите попытку.");
+                    alert.showAndWait();
+                    measureNewTonometrCount = 0;
+                }
             }
             measurePressureButton.setDisable(false);
         });

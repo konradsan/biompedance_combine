@@ -12,7 +12,17 @@ import ru.kit.bioimpedance.equipment.BioimpedanceValue;
 import java.io.*;
 import java.net.Socket;
 
-public class Util {
+class Util {
+    public static void sendCommand (Command command, BufferedWriter output) {
+        try {
+            output.write(serialize(command));
+            output.newLine();
+            output.flush();
+        } catch (IOException ex) {
+            System.err.println("sendCommand() fail! command - " + command);
+            ex.printStackTrace();
+        }
+    }
     public static Data deserializeData(String json) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(json, Data.class);

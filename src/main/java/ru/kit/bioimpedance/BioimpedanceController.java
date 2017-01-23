@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import static ru.kit.bioimpedance.CustomPointType.*;
 import static ru.kit.bioimpedance.Util.deserializeData;
 import static ru.kit.bioimpedance.Util.serialize;
+import static ru.kit.bioimpedance.Util.sendCommand;
 
 public class BioimpedanceController {
 
@@ -439,16 +440,7 @@ public class BioimpedanceController {
         }
     }
 
-    private void sendCommand (Command command, BufferedWriter output) {
-        try {
-            output.write(serialize(command));
-            output.newLine();
-            output.flush();
-        } catch (IOException ex) {
-            System.err.println("sendCommand() fail! command - " + command);
-            ex.printStackTrace();
-        }
-    }
+
 
     private void addPulse(int id) {
         if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
@@ -1144,7 +1136,6 @@ public class BioimpedanceController {
                         } else {
                             break;
                         }
-
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
@@ -1152,7 +1143,6 @@ public class BioimpedanceController {
                             break;
                         }
                     }
-
 
                 } catch (IOException e) {
                     e.printStackTrace();

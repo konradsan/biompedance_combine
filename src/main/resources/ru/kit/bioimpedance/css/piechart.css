@@ -28,3 +28,27 @@
     -fx-stroke: #5d6a72;
 }
 
+/*
+.chart-symbol {
+    -fx-background-color: #f3622d, white;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 5px;
+    -fx-padding: 4px;
+}
+*/
+
+.default-color0.chart-series-line { -fx-stroke: transparent; }
+.default-color1.chart-series-line {
+    -fx-stroke: white;
+    -fx-stroke-width: 1px;
+}
+.default-color0.chart-line-symbol {
+    -fx-background-color: #f3622d, white;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 5px;
+    -fx-padding: 4px;
+}
+.default-color1.chart-line-symbol {
+    -fx-background-color: transparent, transparent;
+}
+

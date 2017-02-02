@@ -32,6 +32,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -140,6 +141,7 @@ public class BioimpedanceController {
     private final int MAX_TIME = 140;
     private int TIME_BETWEEN_FRAMES = 20;
     private boolean pulseIsRun = false;
+    private LinkedList<Integer> heartRateList = new LinkedList<>();
 
     final static int portBioimpedance = 8086;
     final static int portHypoxia = 8085;
@@ -148,6 +150,8 @@ public class BioimpedanceController {
     private XYChart.Series<Number, Number> seriesHR;
     private XYChart.Series<Number, Number> seriesSPO2;
     private XYChart.Series seriesBio;
+    private XYChart.Series<Number, Number> seriesScatter;
+    private XYChart.Series<Number, Number> bisectScatter;
 
     private boolean isTesting = false;
     private Thread checkReadyThread;
@@ -166,8 +170,10 @@ public class BioimpedanceController {
     private static int measureNewTonometrCount = 0;
     private Task<Void> enterMeassure;
 
+    /*@FXML
+    private Canvas heartRhythm;*/
     @FXML
-    private Canvas heartRhythm;
+    private LineChart<Number,Number> scatterChart;
     @FXML
     private Canvas pulseWave;
     @FXML
@@ -229,6 +235,7 @@ public class BioimpedanceController {
     @FXML
     private void initialize() {
         initHeartRhythm();
+        initScatterChart();
         initPulseWave();
         initTimeline();
         initHypoxiaChart();
@@ -257,6 +264,7 @@ public class BioimpedanceController {
         enterMeasureThread.start();
 
     }
+
 
     @FXML
     private void cancel () {
@@ -477,16 +485,11 @@ public class BioimpedanceController {
     }
 
     private void initHeartRhythm() {
-        innerGrid.widthProperty().addListener((observable, oldValue, newValue) -> {
-            heartRhythm.getGraphicsContext2D().setFill(BACKGROUND_COLOR);
-            heartRhythm.setWidth(newValue.doubleValue() / 2 - 8);
-            heartRhythm.getGraphicsContext2D().fillRect(0, 0, heartRhythm.getWidth(), heartRhythm.getHeight());
-        });
-        innerGrid.heightProperty().addListener((observable, oldValue, newValue) -> {
-            heartRhythm.getGraphicsContext2D().setFill(BACKGROUND_COLOR);
-            heartRhythm.setHeight(newValue.doubleValue() / 2 - 58);
-            heartRhythm.getGraphicsContext2D().fillRect(0, 0, heartRhythm.getWidth(), heartRhythm.getHeight());
-        });
+       
+    }
+
+    private void initScatterChart() {
+
     }
 
     private void initHypoxiaChart(){
@@ -521,6 +524,10 @@ public class BioimpedanceController {
 
         bioLegend.setVisible(false);
 
+        //scatterChart.setAnimated(false);
+        scatterChart.getXAxis().setAutoRanging(false);
+        scatterChart.getYAxis().setAutoRanging(false);
+
         prepareChart();
     }
 
@@ -541,17 +548,24 @@ public class BioimpedanceController {
 
         seriesHR = new XYChart.Series<>();
         seriesSPO2 = new XYChart.Series<>();
+        seriesScatter = new XYChart.Series<>();
+        bisectScatter = new XYChart.Series<>();
 
         // Set Name for Series
         seriesHR.setName("Heart rate");
         seriesSPO2.setName("SPO2");
+        seriesScatter.setName("Scatter heart rate");
 
         //set size of UpperBound of Chart
         double upperBound = ((NumberAxis) chart.getXAxis()).getUpperBound();
         ((NumberAxis) chart.getXAxis()).setUpperBound(/*upperBound / 50*/200);
 
+        bisectScatter.getData().add(new XYChart.Data<>(400,400));
+        bisectScatter.getData().add(new XYChart.Data<>(1500,1500));
         // Add Chart Series
         chart.getData().addAll(seriesHR, seriesSPO2);
+        scatterChart.getData().addAll(seriesScatter);
+        scatterChart.getData().addAll(bisectScatter);
     }
 
     //установка флага начала тестирования
@@ -587,6 +601,21 @@ public class BioimpedanceController {
         System.err.println("After test");
     }
 
+    private void drawOneScatterPoint(){
+        double rr1 = 60.0/heartRateList.get(heartRateList.size()-1) * 1000;
+        double rr2 = 60.0/heartRateList.get(heartRateList.size()/2) * 1000;
+
+        System.out.println("["+rr1+", "+rr2+"]");
+
+        final double rr1Random = ThreadLocalRandom.current().nextDouble(rr1-10,rr1+10+1);
+        final double rr2Random = ThreadLocalRandom.current().nextDouble(rr2-10,rr2+10+1);
+        System.out.println("Random -["+rr1Random+", "+rr2Random+"]");
+        Platform.runLater(() -> {
+            seriesScatter.getData().add(new XYChart.Data<>(rr1Random,rr2Random));
+            heartRateList.clear();
+        });
+    }
+
     //отрисовка одного значения HR и SPO2 на графике гипоксии
     private void drawOneInspectionsHRnSPO2 (Inspections inspections, int counterPoints){
 
@@ -618,15 +647,12 @@ public class BioimpedanceController {
 
         //отрисовка графика сердечного ритма, пульсовой волны
         timeline = new Timeline(new KeyFrame(Duration.millis(TIME_BETWEEN_FRAMES), event -> {
-            drawHeartRhythm();
             drawPulseWave();
-            count = (int) ((count + 1) % heartRhythm.getWidth());
+            count = (int) ((count + 1) % pulseWave.getWidth());
             if (count == 0) {
                 heartRatePoints.clear();
                 pulseWavePoints.clear();
-                GraphicsContext gc = heartRhythm.getGraphicsContext2D();
-                gc.setFill(BACKGROUND_COLOR);
-                gc.fillRect(heartRhythm.getWidth() - 2, 0, 2, heartRhythm.getHeight());
+
                 pulseIsRun = false;
             }
 
@@ -666,7 +692,7 @@ public class BioimpedanceController {
                 if (!isTesting) {
                     startButton.setDisable(!(!heartRateLabel.getText().equals("0") && !spo2Label.getText().equals("0")
                             && pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
-                        && equipmentService.isHandsReady() && equipmentService.isLegsReady()
+                        //&& equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
                 }
             }
@@ -721,9 +747,9 @@ public class BioimpedanceController {
 
         gc.setStroke(Color.WHITE);
         gc.setLineWidth(1.0);
-        double centerY = heartRhythm.getHeight() / 4;
+        double centerY = pulseWave.getHeight() / 4;
         gc.beginPath();
-        gc.moveTo(0, pulseWave.getHeight() - (heartRhythm.getHeight() / 8));
+        gc.moveTo(0, pulseWave.getHeight()/2);
         pulseWavePoints.add(equipmentService.getLastPulseoximeterValue().getWave());
         for (int i = 0; i < count; i++) { //count is equals to pulseWavePoints.size
             gc.lineTo(i, pulseWave.getHeight() - (centerY + pulseWavePoints.get(i)));
@@ -732,64 +758,7 @@ public class BioimpedanceController {
         gc.setStroke(Color.YELLOW);
         gc.strokeLine(count, 0, count, pulseWave.getHeight());
     }
-    private void drawHeartRhythm() {
-        if (!pulseIsRun) {
-            if (equipmentService.getLastPulseoximeterValue() != null) {
-                addPulse(1);
-                pulseIsRun = true;
-            }
-        }
-        GraphicsContext gc = heartRhythm.getGraphicsContext2D();
-        gc.setFill(BACKGROUND_COLOR);
-        gc.fillRect(0, 0, count, heartRhythm.getHeight());
 
-        gc.setStroke(Color.WHITE);
-        gc.setLineWidth(1.0);
-        double centerY = 5 * (heartRhythm.getHeight() / 8);
-        gc.beginPath();
-        gc.moveTo(0, centerY);
-        if(pulseIsRun) {
-            for (int i = 0; i < heartRatePoints.size(); i++) {
-                CustomPoint point = heartRatePoints.get(i);
-                if (point.getX() <= count) {
-                    if (point.getType().equals(START) || point.getType().equals(ST_FINISH)) {
-
-                        gc.lineTo(point.getX(), centerY);
-                    /*if (heartRatePoints.get(i + 2).getX() <= count) {
-                        gc.bezierCurveTo(point.getX(), centerY + point.getType().getDeltaY(),
-                                heartRatePoints.get(i + 1).getX(), centerY + heartRatePoints.get(i + 1).getType().getDeltaY(),
-                                heartRatePoints.get(i + 2).getX(), centerY + heartRatePoints.get(i + 2).getType().getDeltaY());
-                    }*/
-                    }
-                    if (!(point.getType().equals(START) ||
-                            point.getType().equals(P) ||
-                            point.getType().equals(ST_FINISH) ||
-                            point.getType().equals(T) ||
-                            point.getType().equals(FINISH)
-                    )) {
-                        CustomPoint nextPoint = heartRatePoints.get(i + 1);
-                        if (nextPoint.getX() <= count) {
-                            gc.lineTo(nextPoint.getX(), centerY + nextPoint.getType().getDeltaY());
-                        }
-                    }
-                }
-            }
-        }
-        if (heartRatePoints.size() > 0) {
-            CustomPoint point = heartRatePoints.get(heartRatePoints.size() - 1);
-            if (point.getType().equals(FINISH)) {
-                if (point.getX() <= count) {
-                    addPulse(2);
-                }
-            }
-        }
-        //рисуем линию до конца жёлтой линии
-        gc.lineTo(count, centerY);
-        gc.stroke();
-
-        gc.setStroke(Color.YELLOW);
-        gc.strokeLine(count, 0, count, heartRhythm.getHeight());
-    }
 
     @FXML
     private void startTest(ActionEvent actionEvent) {
@@ -917,6 +886,10 @@ public class BioimpedanceController {
                         if (counterPoints++ % NUMBER_OF_SKIP == 0) {
                             System.err.println(" HR: " + inspections.getPulse() + " SPO2: " + inspections.getSpo2() + " WAVE: " + inspections.getWave());
                             drawOneInspectionsHRnSPO2(inspections,  counterPoints);
+                            heartRateList.add(inspections.getPulse());
+                            if(heartRateList.size()>=20){
+                                drawOneScatterPoint();
+                            }
                         }
                     } else if (data instanceof LastResearch) {
                         //TODO

@@ -22,10 +22,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.*;
 import org.json.JSONObject;
+import ru.kit.SoundManager;
+import ru.kit.SoundManagerSingleton;
 import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
 import ru.kit.bioimpedance.equipment.*;
+import ru.kit.bioimpedance.service.Sounds;
 import ru.kit.tonometr_comport.*;
 
 import java.io.*;
@@ -169,9 +172,12 @@ public class BioimpedanceController {
     private Task<TonometrData> measureNewTonometrTask;
     private static int measureNewTonometrCount = 0;
     private Task<Void> enterMeassure;
+    private static SoundManager soundManager;
 
     /*@FXML
     private Canvas heartRhythm;*/
+    @FXML
+    private Label signalLabel;
     @FXML
     private LineChart<Number,Number> scatterChart;
     @FXML
@@ -193,7 +199,9 @@ public class BioimpedanceController {
     @FXML
     private Label spo2Label;
     @FXML
-    GridPane forChart;
+    private GridPane forChart;
+    @FXML
+    private GridPane signalGridPane;
 
     private LineChartWithMarker<Number, Number> chart;
 
@@ -217,20 +225,32 @@ public class BioimpedanceController {
     private HBox bioLegend;
     @FXML
     private Button acceptPressureValuesButton;
+    @FXML
+    private Button continueWarningButton;
+    @FXML
+    private Hyperlink inputSystolicPressureHyperLink, inputDiastolicPressureHyperLink;
+    @FXML
+    private Button backToMenuButton;
 
 
 
 
     @FXML
-    private void onContinueWarning(){
+    private void onContinueWarning() throws InterruptedException {
         warningScreen.setVisible(false);
         measurePreassure.setVisible(true);
+        //soundManager.playSound(Sounds.BASE_FEMALE_TAKE_OFF_YOUR_SHOES, SoundManager.SoundType.VOICE,measurePressureButton,inputDiastolicPressureHyperLink,inputSystolicPressureHyperLink);
+        soundManager.pushSoundToTrackQueue(Sounds.BASE_FEMALE_TAKE_OFF_YOUR_SHOES, SoundManager.SoundType.VOICE);
+        soundManager.pushSoundToTrackQueue(Sounds.BASE_FEMALE_COMFORTLY_SEAT, SoundManager.SoundType.VOICE,measurePressureButton,inputDiastolicPressureHyperLink,inputSystolicPressureHyperLink);
+        soundManager.pushSoundToTrackQueue(Sounds.BASE_FEMALE_RELAX_AND_STRAIGHT_LEFT_HAND, SoundManager.SoundType.VOICE,measurePressureButton,inputDiastolicPressureHyperLink,inputSystolicPressureHyperLink);
     }
     @FXML
     private void onAcceptMeasurePressure(){
         enterMeassure.cancel(true);
         measurePreassure.setVisible(false);
         startChecking();
+        soundManager.playSound(Sounds.MACHINE_PROCESS_MAIN, SoundManager.SoundType.BACKGROUND);
+        soundManager.playSound(Sounds.BASE_MALE_BASE_TEST_STARTED, SoundManager.SoundType.VOICE);
     }
     @FXML
     private void initialize() {
@@ -263,6 +283,9 @@ public class BioimpedanceController {
         Thread enterMeasureThread = new Thread(enterMeassure);
         enterMeasureThread.start();
 
+        soundManager = SoundManagerSingleton.getInstance();
+        soundManager.playSound(Sounds.MACHINE_PROCESS_MAIN, SoundManager.SoundType.BACKGROUND);
+        soundManager.playSound(Sounds.BASE_MALE_BASE_LOADING, SoundManager.SoundType.VOICE, continueWarningButton);
     }
 
 
@@ -289,6 +312,7 @@ public class BioimpedanceController {
         if (enterMeassure!=null) enterMeassure.cancel(true);
         closeSocketConnection(bioSocket);
         closeSocketConnection(hypoxiaSocket);
+        soundManager.disposeAllSounds();
 
     }
 
@@ -365,6 +389,10 @@ public class BioimpedanceController {
 
                 sendCommand(command, outputB);
                 sendCommand(command, outputH);
+                Platform.runLater(() -> {
+                    soundManager.pushSoundToTrackQueue(Sounds.BASE_MALE_PULSE_ACTIVATED, SoundManager.SoundType.VOICE,startButton);
+                    soundManager.pushSoundToTrackQueueWithDelay(Sounds.BASE_FEMALE_LEGS_AND_HANDS_PRESS, SoundManager.SoundType.VOICE, 4000, startButton);
+                });
 
                 int counterPoints = 0;
                 do {
@@ -537,9 +565,9 @@ public class BioimpedanceController {
 //        okButton.setDisable(true);
     }
 
-    void enableAll(){
+    /*void enableAll(){
         startButton.setDisable(false);
-    }
+    }*/
 
     //удаление всех данных с графика гипоксии
     //установка размеров графика по оси Х
@@ -598,10 +626,14 @@ public class BioimpedanceController {
         //startChecking();
         secondsForTest = MAX_TIME;
 
+        if (timeline!=null) timeline.stop();
+        if (timer!=null) timer.stop();
+
         System.err.println("After test");
     }
 
     private void drawOneScatterPoint(){
+        if(heartRateList.get(heartRateList.size()-1)==0 || heartRateList.get(heartRateList.size()/2) == 0) return;
         double rr1 = 60.0/heartRateList.get(heartRateList.size()-1) * 1000;
         double rr2 = 60.0/heartRateList.get(heartRateList.size()/2) * 1000;
 
@@ -632,6 +664,7 @@ public class BioimpedanceController {
         Platform.runLater(() -> {
             this.heartRateLabel.setText("" + inspections.getPulse());
             this.spo2Label.setText("" + inspections.getSpo2());
+            this.signalLabel.setText("" + inspections.getSignal());
         });
     }
 
@@ -691,8 +724,9 @@ public class BioimpedanceController {
 
                 if (!isTesting) {
                     startButton.setDisable(!(!heartRateLabel.getText().equals("0") && !spo2Label.getText().equals("0")
+                            && !heartRateLabel.getText().equals("--") && !spo2Label.getText().equals("--")
                             && pulseoximeterValue.getHeartRate() != null && pulseoximeterValue.getSpo2() != null
-                        //&& equipmentService.isHandsReady() && equipmentService.isLegsReady()
+                        && equipmentService.isHandsReady() && equipmentService.isLegsReady()
                         && diastolicPressureProperty.get()> 0 && systolicPressureProperty.get() > 0));
                 }
             }
@@ -762,7 +796,9 @@ public class BioimpedanceController {
 
     @FXML
     private void startTest(ActionEvent actionEvent) {
-
+        soundManager.playSound(Sounds.MACHINE_PROCESS_END, SoundManager.SoundType.BACKGROUND);
+        soundManager.playSound(Sounds.BASE_MALE_BIOIMPEDANCE_ACTIVATED, SoundManager.SoundType.VOICE);
+        soundManager.pushSoundToTrackQueue(Sounds.HEART_MEASURE_MAIN, SoundManager.SoundType.BACKGROUND);
         beforeTest();
 
         //Занесение давления в репорт
@@ -774,7 +810,6 @@ public class BioimpedanceController {
         systBP.setValue(systolicPressureProperty.getValue());
         summorizedLastResearch.put("distBP",distBP);
         summorizedLastResearch.put("systBP",systBP);
-        //TODO
 
         //Bioimpedance test & show results
         StartTestBioImpedance startTestBioImpedance = new StartTestBioImpedance(this, portBioimpedance);
@@ -785,6 +820,9 @@ public class BioimpedanceController {
             @Override
             protected BioimpedanceValue call() throws Exception {
                 //ожидание (3 сек) сбора LastRearch биоимпеданса
+                Platform.runLater(() -> {
+                    soundManager.playSound(Sounds.PLATES_MAIN, SoundManager.SoundType.BACKGROUND_SIMPLE); //Старт био звук
+                });
                 int i=1;
                 while (equipmentService.getBioimpedanceValue()==null) {
                     if (equipmentService.isBioimpedanceReady()) break;
@@ -820,7 +858,8 @@ public class BioimpedanceController {
                     dataMM.getNode().setStyle("-fx-bar-fill: #f3622d");
                     dataWater.getNode().setStyle("-fx-bar-fill: #0087be");
                     dataWeight.getNode().setStyle("-fx-bar-fill: #36804d");
-
+                    signalGridPane.setVisible(true);
+                    soundManager.playSound(Sounds.PLATES_END, SoundManager.SoundType.BACKGROUND_SIMPLE);
 
 //                    barChart.getData().add(new PieChart.Data(String.format("Жировая масса \n%.2f%%", fat), fat));
 //                    barChart.getData().add(new PieChart.Data(String.format("Мышечная масса \n%.2f%%", mm), mm));
@@ -836,6 +875,11 @@ public class BioimpedanceController {
                     } catch (InterruptedException e) { // для формулы 7302/123 * seconds
                         e.printStackTrace();
                     }*/
+                    Platform.runLater(() -> {
+                        soundManager.playSound(Sounds.BASE_MALE_BASE_TEST_COMPLETED, SoundManager.SoundType.VOICE);
+                        soundManager.playSound(Sounds.HEART_MEASURE_END, SoundManager.SoundType.BACKGROUND,backToMenuButton);
+                    });
+
                     afterTest();
                 });
                 oxiWrapperThread.setDaemon(true);
@@ -892,7 +936,6 @@ public class BioimpedanceController {
                             }
                         }
                     } else if (data instanceof LastResearch) {
-                        //TODO
                         System.err.println(data);
                         System.err.println("Hypoxia LastrReaserch is ready");
                         summorizedLastResearch.putAll(((LastResearch) data).getInspections());
@@ -974,6 +1017,8 @@ public class BioimpedanceController {
 
         timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             secondsForTest--;
+            if(secondsForTest==122) soundManager.playSound(Sounds.TIME_TO_END_2_MINUTE, SoundManager.SoundType.VOICE);
+            if(secondsForTest==62) soundManager.playSound(Sounds.TIME_TO_END_1_MINUTE, SoundManager.SoundType.VOICE);
             timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
             double value = ((double) (MAX_TIME - secondsForTest)) / MAX_TIME;
             progressBar.setProgress(value);
@@ -1044,8 +1089,13 @@ public class BioimpedanceController {
         public TonometrData(int systP, int diastP){this.systP = systP; this.diastP = diastP;}
     }
     @FXML
-    private void measurePressure(ActionEvent actionEvent) {
+    private void measurePressure() {
+        measurePressureButton.setDisable(true);
+        inputDiastolicPressureHyperLink.setDisable(true);
+        inputSystolicPressureHyperLink.setDisable(true);
         if(comPort.equals("")){
+            if(soundManager.isPlaying(SoundManager.SoundType.BACKGROUND))
+                soundManager.playSound(Sounds.MACHINE_PROCESS_END,SoundManager.SoundType.BACKGROUND);
             measureNewTonometr();
         }else {
             measureOldTonometr(comPort);
@@ -1057,11 +1107,14 @@ public class BioimpedanceController {
         measureNewTonometrTask = new Task<TonometrData>() {
             @Override
             protected TonometrData call() throws Exception {
-
                 try (Socket socket = new Socket("localhost", 8084)) {
+                    Platform.runLater(() -> {
+                        acceptPressureValuesButton.setDisable(true);
+
+                    });
                     BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     BufferedWriter output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                    //TODO
+
                     sendCommand(new Launch(getAge(), isMan(), getWeight(), getHeight(), getActivityLevel(), 0, 0, 0), output);
                     sendCommand(new CheckStatus(), output);
 
@@ -1075,7 +1128,7 @@ public class BioimpedanceController {
                         System.err.println("Error: Cannot open Tonometr!");
                         return null;
                     }
-
+                    Platform.runLater(() -> soundManager.pushSoundToTrackQueue(Sounds.TONOMETR_MAIN, SoundManager.SoundType.BACKGROUND));
                     sendCommand(new StartTest(), output);
                     while (true) {
                         if (this.isCancelled()){
@@ -1131,10 +1184,14 @@ public class BioimpedanceController {
                 systolicPressureProperty.setValue(data.systP);
                 diastolicPressureProperty.setValue(data.diastP);
                 measureNewTonometrCount = 0;
+                soundManager.playSound(Sounds.TONOMETR_END, SoundManager.SoundType.BACKGROUND,
+                        acceptPressureValuesButton,measurePressureButton,inputSystolicPressureHyperLink,inputDiastolicPressureHyperLink);
+                //measurePressureButton.setDisable(false);
             } else {
                 if (measureNewTonometrCount<3) {
                     measureNewTonometrCount++;
                     System.err.println("Trying to re-measure pressure time="+measureNewTonometrCount);
+                    soundManager.playSound(Sounds.TONOMETR_END, SoundManager.SoundType.BACKGROUND);
                     measureNewTonometr();
                 } else {
                     Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -1143,9 +1200,12 @@ public class BioimpedanceController {
                     alert.setContentText("К сожалению, не удалось измерить давление. Пожалуйста, повторите попытку.");
                     alert.showAndWait();
                     measureNewTonometrCount = 0;
+                    soundManager.playSound(Sounds.TONOMETR_END, SoundManager.SoundType.BACKGROUND,
+                            acceptPressureValuesButton,measurePressureButton,inputDiastolicPressureHyperLink,inputSystolicPressureHyperLink);
+                    //measurePressureButton.setDisable(false);
                 }
             }
-            measurePressureButton.setDisable(false);
+
         });
 
         measurePressureButton.setDisable(true);

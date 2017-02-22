@@ -78,5 +78,13 @@
             <artifactId>json</artifactId>
             <version>20160810</version>
         </dependency>
+
+        <!-- Sound Manager -->
+        <dependency>
+            <groupId>ru.kit</groupId>
+            <artifactId>sound_manager_scanme</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
     </dependencies>
 </project>

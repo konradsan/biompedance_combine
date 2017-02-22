@@ -1,3 +1,4 @@
+import javafx.concurrent.Task;
 import org.json.JSONObject;
 import ru.kit.bioimpedance.dto.Inspection;
 import ru.kit.bioimpedance.dto.LastResearch;
@@ -7,35 +8,28 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Test {
+    private static ExecutorService checkingQueueExecutor = Executors.newSingleThreadExecutor();
+
     public static void main(String[] args) {
-
-        /*Test test = new Test();
-
-        LastResearch lastResearchHypoxia = new LastResearch();
-        lastResearchHypoxia.addInspection("FAT", 24, 20, 30);
-        lastResearchHypoxia.addInspection("TBW", 34, 30, 40);
-        lastResearchHypoxia.addInspection("ECW", 44, 40, 50);
-        lastResearchHypoxia.addInspection("LF", 44, 40, 50);
-        lastResearchHypoxia.addInspection("HF", 44, 40, 50);
-
-        LastResearch lastResearchBio = new LastResearch();
-        lastResearchHypoxia.addInspection("ICW", 24, 20, 30);
-        lastResearchHypoxia.addInspection("MM", 34, 30, 40);
-        lastResearchHypoxia.addInspection("STRESS", 44, 40, 50);
-        lastResearchHypoxia.addInspection("BIOAGE", 44, 40, 50);
-
-        Map<String, Inspection> inspections = new HashMap<>();
-        inspections.putAll(lastResearchBio.getInspections());
-        inspections.putAll(lastResearchHypoxia.getInspections());
-
-        JSONObject jsonObject = createJSON(inspections);*/
-
-
-
+        checkingQueueExecutor.submit(new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                System.out.println("1 task");
+                return null;
+            }
+        });
+        checkingQueueExecutor.submit(new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                System.out.println("2 task");
+                return null;
+            }
+        });
     }
-
-
-
 }
+
+

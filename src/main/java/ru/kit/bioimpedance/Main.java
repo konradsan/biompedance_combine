@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
+import ru.kit.SoundManagerSingleton;
 
 import java.io.IOException;
 
@@ -20,7 +21,7 @@ public class Main extends Application {
         btn.setOnAction(event -> {
             Stage s = null;
             try {
-                s = new BioimpedanceStage(22, true, 82, 183, 0, 120, 80, "");
+                s = new BioimpedanceStage(22, true, 82, 183, 0, 120, 80, "", SoundManagerSingleton.getInstance());
             } catch (IOException e) {
                 e.printStackTrace();
             }

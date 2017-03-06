@@ -23,7 +23,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="700.0" minWidth="900.0" prefHeight="727.0" prefWidth="1302.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ru.kit.bioimpedance.BioimpedanceController">
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="700.0" minWidth="900.0" prefHeight="727.0" prefWidth="1302.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <GridPane stylesheets="@../css/buttons.css">
           <columnConstraints>
@@ -407,7 +407,7 @@
                         <Font size="40.0" />
                      </font>
                   </Text>
-                  <Button fx:id="backToMenuButton" alignment="CENTER" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" styleClass="endButton" text="Вернуться в меню" textAlignment="CENTER">
+                  <Button fx:id="backToMenuButton" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#ok" prefHeight="65.0" prefWidth="245.0" styleClass="endButton" text="Вернуться в меню" textAlignment="CENTER">
                      <font>
                         <Font size="20.0" />
                      </font>

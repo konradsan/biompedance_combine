@@ -1,37 +1,23 @@
 package ru.kit.bioimpedance;
 
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
+import ru.kit.SoundManager;
 
 import java.io.*;
-import java.util.concurrent.TimeUnit;
 
 public class BioimpedanceStage extends Stage {
 
-    private static final String BIOIMPEDANCE_SERVICE_NAME = "BioService";
-    private static final String OXI_SERVICE_NAME = "OxiService";
-
-    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path) throws IOException {
-        this(age,isMale,width,height,activityLevel,systBP,diastBP,path,"");
+    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, SoundManager soundManager) throws IOException {
+        this(age,isMale,width,height,activityLevel,systBP,diastBP,path,"", soundManager);
     }
 
-    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, String comPort) throws IOException {
-
-        //No need to restart services
-        /*execService("stop", OXI_SERVICE_NAME);
-
-        execService("start", OXI_SERVICE_NAME);
-
-        execService("stop",BIOIMPEDANCE_SERVICE_NAME);
-
-        execService("start", BIOIMPEDANCE_SERVICE_NAME);*/
-
+    public BioimpedanceStage(int age, boolean isMale, int width, int height, int activityLevel, int systBP, int diastBP, String path, String comPort, SoundManager soundManager) throws IOException {
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/kit/bioimpedance/fxml/bioimpedance.fxml"));
+        loader.setController(new BioimpedanceController(soundManager));
         Parent root = loader.load();
 
         BioimpedanceController controller = loader.getController();
@@ -59,35 +45,4 @@ public class BioimpedanceStage extends Stage {
         this.setScene(new Scene(root));
 
     }
-
-    private void execService(String command, String serviceName){
-
-        try {
-            Process p = null;
-            p = Runtime.getRuntime().exec("net " + command +" " + serviceName);
-
-            p.waitFor();
-
-            System.out.println(serviceName + ":" + command);
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line = reader.readLine();
-            while (line != null) {
-                System.err.println(line);
-                line = reader.readLine();
-            }
-
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /*public BioimpedanceStage() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/ru/kit/bioimpedance/fxml/bioimpedance.fxml"));
-        Parent root = loader.load();
-        this.setScene(new Scene(root));
-        BioimpedanceController controller = loader.getController();
-        controller.setStage(this);
-
-    }*/
 }

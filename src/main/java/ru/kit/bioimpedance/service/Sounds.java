@@ -1,15 +1,6 @@
 package ru.kit.bioimpedance.service;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.layout.FlowPane;
-import javafx.stage.Stage;
-import ru.kit.SoundManager;
-import ru.kit.SoundManagerSingleton;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 
 /**
@@ -46,11 +37,8 @@ public class Sounds {
     public static final String BASE_MALE_PULSE_ACTIVATED = properties.getProperty("base_male_pulse_activated");
     public static final String BASE_MALE_BASE_TEST_COMPLETED = properties.getProperty("base_male_base_test_completed");
 
-    public static final String TIME_TO_END_1_MINUTE = properties.getProperty("time_to_end_1_minute");
-    public static final String TIME_TO_END_2_MINUTE = properties.getProperty("time_to_end_2_minute");
-
-    private static SoundManager soundManager = SoundManagerSingleton.getInstance();
-
-
+    public static final String TIME_TO_END = properties.getProperty("time_to_end");
+    public static final String TIME_1 = properties.getProperty("time_1");
+    public static final String TIME_2 = properties.getProperty("time_2");
 
 }

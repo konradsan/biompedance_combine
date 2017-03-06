@@ -172,7 +172,7 @@ public class BioimpedanceController {
     private Task<TonometrData> measureNewTonometrTask;
     private static int measureNewTonometrCount = 0;
     private Task<Void> enterMeassure;
-    private static SoundManager soundManager;
+    private SoundManager soundManager;
 
     /*@FXML
     private Canvas heartRhythm;*/
@@ -252,6 +252,11 @@ public class BioimpedanceController {
         soundManager.playSound(Sounds.MACHINE_PROCESS_MAIN, SoundManager.SoundType.BACKGROUND);
         soundManager.playSound(Sounds.BASE_MALE_BASE_TEST_STARTED, SoundManager.SoundType.VOICE);
     }
+
+    public BioimpedanceController(SoundManager soundManager) {
+        this.soundManager = soundManager;
+    }
+
     @FXML
     private void initialize() {
         initHeartRhythm();
@@ -283,7 +288,7 @@ public class BioimpedanceController {
         Thread enterMeasureThread = new Thread(enterMeassure);
         enterMeasureThread.start();
 
-        soundManager = SoundManagerSingleton.getInstance();
+        soundManager.disposeAllSounds();
         soundManager.playSound(Sounds.MACHINE_PROCESS_MAIN, SoundManager.SoundType.BACKGROUND);
         soundManager.playSound(Sounds.BASE_MALE_BASE_LOADING, SoundManager.SoundType.VOICE, continueWarningButton);
     }
@@ -391,7 +396,7 @@ public class BioimpedanceController {
                 sendCommand(command, outputH);
                 Platform.runLater(() -> {
                     soundManager.pushSoundToTrackQueue(Sounds.BASE_MALE_PULSE_ACTIVATED, SoundManager.SoundType.VOICE,startButton);
-                    soundManager.pushSoundToTrackQueueWithDelay(Sounds.BASE_FEMALE_LEGS_AND_HANDS_PRESS, SoundManager.SoundType.VOICE, 4000, startButton);
+                    soundManager.pushSoundToTrackQueueWithDelay(Sounds.BASE_FEMALE_LEGS_AND_HANDS_PRESS, SoundManager.SoundType.VOICE, 7000, startButton);
                 });
 
                 int counterPoints = 0;
@@ -1017,8 +1022,14 @@ public class BioimpedanceController {
 
         timer = new Timeline(new KeyFrame(Duration.seconds(1), event -> {
             secondsForTest--;
-            if(secondsForTest==122) soundManager.playSound(Sounds.TIME_TO_END_2_MINUTE, SoundManager.SoundType.VOICE);
-            if(secondsForTest==62) soundManager.playSound(Sounds.TIME_TO_END_1_MINUTE, SoundManager.SoundType.VOICE);
+            if(secondsForTest==122){
+                soundManager.playSound(Sounds.TIME_TO_END, SoundManager.SoundType.VOICE);
+                soundManager.pushSoundToTrackQueue(Sounds.TIME_2, SoundManager.SoundType.VOICE);
+            }
+            if(secondsForTest==62){
+                soundManager.playSound(Sounds.TIME_TO_END, SoundManager.SoundType.VOICE);
+                soundManager.pushSoundToTrackQueue(Sounds.TIME_1, SoundManager.SoundType.VOICE);
+            }
             timeLabel.setText(String.format("%d:%02d", secondsForTest / 60, secondsForTest % 60));
             double value = ((double) (MAX_TIME - secondsForTest)) / MAX_TIME;
             progressBar.setProgress(value);

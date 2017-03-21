@@ -29,7 +29,6 @@ public class Sounds {
     public static final String BASE_FEMALE_COMFORTLY_SEAT = properties.getProperty("base_female_comfortly_seat");
     public static final String BASE_FEMALE_LEGS_AND_HANDS_PRESS = properties.getProperty("base_female_legs_and_hands_press");
     public static final String BASE_FEMALE_RELAX_AND_STRAIGHT_LEFT_HAND = properties.getProperty("base_female_relax_and_straight_left_hand");
-    public static final String BASE_FEMALE_TAKE_OFF_YOUR_SHOES = properties.getProperty("base_female_take_off_your_shoes");
 
     public static final String BASE_MALE_BASE_LOADING = properties.getProperty("base_male_base_loading");
     public static final String BASE_MALE_BASE_TEST_STARTED = properties.getProperty("base_male_base_test_started");

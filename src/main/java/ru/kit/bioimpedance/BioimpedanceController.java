@@ -479,29 +479,6 @@ public class BioimpedanceController {
         }
     }
 
-
-
-    private void addPulse(int id) {
-        if (equipmentService.getLastPulseoximeterValue().getWave() == 0 &&
-                equipmentService.getLastPulseoximeterValue().getSpo2() == 0 &&
-                equipmentService.getLastPulseoximeterValue().getHeartRate() == 0) {
-
-        } else {
-            int distanceToNextPulse = distanceToNextPulse(equipmentService.getLastPulseoximeterValue().getHeartRate());
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 0, START));
-            //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, P));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 1, PR_START));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 1, PR_FINISH));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 6, Q));//1ый низ
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 8, R));//1ый верх
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 10, S));//2ой низ
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, ST_START));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, ST_FINISH));
-            //heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 50, T));
-            heartRatePoints.add(new CustomPoint(distanceToNextPulse + count + 15, FINISH));
-        }
-    }
-
     private void initPulseWave() {
         innerGrid.widthProperty().addListener((observable, oldValue, newValue) -> {
             pulseWave.getGraphicsContext2D().setFill(BACKGROUND_COLOR);
@@ -568,10 +545,6 @@ public class BioimpedanceController {
 //        okButton.setDisable(true);
     }
 
-    /*void enableAll(){
-        startButton.setDisable(false);
-    }*/
-
     //удаление всех данных с графика гипоксии
     //установка размеров графика по оси Х
     private void prepareChart() {
@@ -621,8 +594,14 @@ public class BioimpedanceController {
     void afterTest() {
         if(secondsForTest!=0){
             badEndScreen.setVisible(true);
+            Platform.runLater(() -> soundManager.playSound(Sounds.HEART_MEASURE_END, SoundManager.SoundType.BACKGROUND));
         }else {
             okEndScreen.setVisible(true);
+            backToMenuButton.setDisable(false);
+            Platform.runLater(() -> {
+                soundManager.playSound(Sounds.BASE_MALE_BASE_TEST_COMPLETED, SoundManager.SoundType.VOICE);
+                soundManager.playSound(Sounds.HEART_MEASURE_END, SoundManager.SoundType.BACKGROUND);
+            });
         }
         isTesting = false;
         //equipmentService.setMockWavesValues();
@@ -839,15 +818,7 @@ public class BioimpedanceController {
                 }
                 Thread oxiWrapperThread = new Thread(() -> {
                     testHypoxiaProgressBarTimer();
-
-                    if (isTesting && !isStageClosed) {
-                        Platform.runLater(() -> {
-                            soundManager.playSound(Sounds.BASE_MALE_BASE_TEST_COMPLETED, SoundManager.SoundType.VOICE);
-                            soundManager.playSound(Sounds.HEART_MEASURE_END, SoundManager.SoundType.BACKGROUND,backToMenuButton);
-                        });
-
-                        afterTest();
-                    }
+                    afterTest();
                 });
                 oxiWrapperThread.start();
             } catch (InterruptedException | ExecutionException e) {
@@ -914,7 +885,7 @@ public class BioimpedanceController {
         }
     }
 
-    class StartTestBioImpedance extends Thread{
+    class StartTestBioImpedance extends Thread {
 
         final private int port;
         BioimpedanceController controller;

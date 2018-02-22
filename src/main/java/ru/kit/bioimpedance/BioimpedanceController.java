@@ -1244,7 +1244,11 @@ public class BioimpedanceController {
             innerJSONObject.put("power", inspection.getValue());
             innerJSONObject.put("min", inspection.getMin());
             innerJSONObject.put("max", inspection.getMax());
-
+            if(inspection.getName().equalsIgnoreCase("hr")){
+                innerJSONObject.put("power", (inspection.getValue()-inspection.getMin() > 0 ?
+                        (inspection.getValue()-(inspection.getValue()-inspection.getMin())/2) : inspection.getValue()
+                ));
+            }
 //            if(inspection.getName().equalsIgnoreCase("RI")){
 //                innerJSONObject.put("power", 30 + (int)(Math.random() * 15));
 //            }else if(inspection.getName().equalsIgnoreCase("svr")){

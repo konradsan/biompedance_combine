@@ -5,9 +5,6 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -23,7 +20,6 @@ import javafx.scene.paint.Paint;
 import javafx.util.*;
 import org.json.JSONObject;
 import ru.kit.SoundManager;
-import ru.kit.SoundManagerSingleton;
 import ru.kit.bioimpedance.commands.*;
 import ru.kit.bioimpedance.control.LineChartWithMarker;
 import ru.kit.bioimpedance.dto.*;
@@ -36,12 +32,9 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static ru.kit.bioimpedance.CustomPointType.*;
 import static ru.kit.bioimpedance.Util.deserializeData;
-import static ru.kit.bioimpedance.Util.serialize;
 import static ru.kit.bioimpedance.Util.sendCommand;
 
 public class BioimpedanceController {
